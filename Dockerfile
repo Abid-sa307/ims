@@ -1,5 +1,9 @@
-# Stage 1: Build Assets
-FROM node:20-alpine AS build
+# Stage 1: Build Assets (Now includes PHP for wayfinder/artisan support)
+FROM php:8.3-cli AS build
+
+# Install Node.js
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs
 
 WORKDIR /app
 COPY . .
@@ -7,7 +11,7 @@ COPY . .
 # Install dependencies and build assets
 RUN npm install && npm run build
 
-# Stage 2: PHP Application
+# Stage 2: PHP Application (The production server)
 FROM php:8.3-apache
 
 # Install system dependencies
@@ -56,7 +60,7 @@ RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available
     && echo "Listen \${PORT}" > /etc/apache2/ports.conf \
     && sed -i "s/80/\${PORT}/g" /etc/apache2/sites-available/000-default.conf
 
-# Set environment for Render port defaults
+# Set environment for Render port
 ENV PORT=10000
 
 # Copy and prepare entrypoint script
