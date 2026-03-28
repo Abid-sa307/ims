@@ -23,8 +23,18 @@ const mainNavItems: NavItem[] = [
     },
     {
         title: 'B2B Dashboard',
-        href: '/b2b-dashboard',
+        href: '#',
         icon: Activity,
+        items: [
+            {
+                title: 'Overview',
+                href: '/b2b-dashboard',
+            },
+            {
+                title: 'Item Master',
+                href: '/master/item-master',
+            },
+        ],
     },
     {
         title: 'General Configuration',
