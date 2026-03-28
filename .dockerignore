@@ -6,6 +6,7 @@ vendor
 .vscode
 .dockerignore
 Dockerfile
+render.yaml
 storage/logs/*.log
 bootstrap/cache/*.php
 public/build
