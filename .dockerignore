@@ -1,0 +1,15 @@
+node_modules
+vendor
+.git
+.env
+.idea
+.vscode
+.dockerignore
+Dockerfile
+storage/logs/*.log
+bootstrap/cache/*.php
+public/build
+public/hot
+public/storage
+tests
+*.md
