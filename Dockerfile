@@ -1,34 +1,41 @@
-# Stage 1: Build Assets (Now includes PHP for wayfinder/artisan support)
+# Stage 1: Build Assets
 FROM php:8.3-cli AS build
 
 # Install Node.js
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs
 
+# Install system dependencies for PHP extensions
+RUN apt-get update && apt-get install -y \
+    libpng-dev libjpeg-dev libfreetype6-dev libzip-dev libicu-dev \
+    libonig-dev libxml2-dev zip unzip git curl gnupg procps
+
+# Install PHP extensions required by Laravel
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j$(nproc) gd pdo_mysql bcmath intl zip mbstring xml
+
+# Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
 WORKDIR /app
 COPY . .
 
-# Install dependencies and build assets
+# 1. Install PHP dependencies first (needed for Vite plugins that call Artisan)
+RUN composer install --no-dev --optimize-autoloader
+
+# 2. Build assets with dummy env to prevent DB connection errors
+ENV DB_CONNECTION=sqlite
+ENV DB_DATABASE=:memory:
+ENV APP_KEY=base64:Zi682yEnRfxnCo4oj2i33AQAu66bYMTHcgd0Dqtd7RY=
 RUN npm install && npm run build
 
-# Stage 2: PHP Application (The production server)
+# Stage 2: Production Server
 FROM php:8.3-apache
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
-    libpng-dev \
-    libjpeg-dev \
-    libfreetype6-dev \
-    libzip-dev \
-    libicu-dev \
-    libonig-dev \
-    libxml2-dev \
-    zip \
-    unzip \
-    git \
-    curl \
-    gnupg \
-    procps
+    libpng-dev libjpeg-dev libfreetype6-dev libzip-dev libicu-dev \
+    libonig-dev libxml2-dev zip unzip git curl gnupg procps
 
 # Install PHP extensions
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
@@ -37,23 +44,14 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite
 
-# Install Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy application files
-COPY . .
-
-# Copy built assets from Stage 1
-COPY --from=build /app/public/build ./public/build
+# Copy everything from the build stage (including vendor and built assets)
+COPY --from=build /app /var/www/html
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
-
-# Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader
 
 # Configure Apache for Render
 RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available/000-default.conf \
@@ -67,5 +65,4 @@ ENV PORT=10000
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Start command
 ENTRYPOINT ["entrypoint.sh"]
