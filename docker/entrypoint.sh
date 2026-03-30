@@ -22,7 +22,8 @@ php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
-# Set permissions for storage and bootstrap/cache
+# Ensure structure exists and set permissions for storage and bootstrap/cache
+mkdir -p storage/logs storage/framework/cache storage/framework/sessions storage/framework/views
 chmod -R 775 storage bootstrap/cache
 chown -R www-data:www-data storage bootstrap/cache
 
