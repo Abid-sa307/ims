@@ -8,11 +8,11 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
 # Install system dependencies for PHP extensions
 RUN apt-get update && apt-get install -y \
     libpng-dev libjpeg-dev libfreetype6-dev libzip-dev libicu-dev \
-    libonig-dev libxml2-dev zip unzip git curl gnupg procps
+    libonig-dev libxml2-dev libpq-dev zip unzip git curl gnupg procps
 
 # Install PHP extensions required by Laravel
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j$(nproc) gd pdo_mysql bcmath intl zip mbstring xml
+    && docker-php-ext-install -j$(nproc) gd pdo_mysql pdo_pgsql pgsql bcmath intl zip mbstring xml
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -35,11 +35,11 @@ FROM php:8.3-apache
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     libpng-dev libjpeg-dev libfreetype6-dev libzip-dev libicu-dev \
-    libonig-dev libxml2-dev zip unzip git curl gnupg procps
+    libonig-dev libxml2-dev libpq-dev zip unzip git curl gnupg procps
 
 # Install PHP extensions
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j$(nproc) gd pdo_mysql bcmath intl zip opcache mbstring xml
+    && docker-php-ext-install -j$(nproc) gd pdo_mysql pdo_pgsql pgsql bcmath intl zip opcache mbstring xml
 
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite
