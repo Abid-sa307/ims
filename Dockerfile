@@ -54,10 +54,6 @@ COPY --from=build /app /var/www/html
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Configure Apache for Render
-RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available/000-default.conf \
-    && echo "Listen \${PORT}" > /etc/apache2/ports.conf \
-    && sed -i "s/80/\${PORT}/g" /etc/apache2/sites-available/000-default.conf
 
 # Set environment for Render port
 ENV PORT=10000
