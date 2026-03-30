@@ -5,14 +5,13 @@ FROM php:8.3-cli AS build
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs
 
-# Install system dependencies for PHP extensions
-RUN apt-get update && apt-get install -y \
-    libpng-dev libjpeg-dev libfreetype6-dev libzip-dev libicu-dev \
-    libonig-dev libxml2-dev libpq-dev zip unzip git curl gnupg procps
+# Use official PHP extension installer for robust extension management
+ADD --chmod=0755 https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
 
-# Install PHP extensions required by Laravel
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j$(nproc) gd pdo_mysql pdo_pgsql pgsql bcmath intl zip mbstring xml
+# Install system dependencies and PHP extensions
+RUN apt-get update && apt-get install -y \
+    zip unzip git curl gnupg procps \
+    && install-php-extensions gd pdo_mysql pdo_pgsql pgsql bcmath intl zip mbstring xml
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -20,8 +19,11 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 WORKDIR /app
 COPY . .
 
-# 1. Install PHP dependencies first (needed for Vite plugins that call Artisan)
+# 1. Install PHP dependencies first
 RUN composer install --no-dev --optimize-autoloader
+
+# Debugging: show loaded modules in build stage
+RUN php -m
 
 # 2. Build assets with dummy env to prevent DB connection errors
 ENV DB_CONNECTION=sqlite
@@ -32,14 +34,13 @@ RUN npm install && npm run build
 # Stage 2: Production Server
 FROM php:8.3-apache
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    libpng-dev libjpeg-dev libfreetype6-dev libzip-dev libicu-dev \
-    libonig-dev libxml2-dev libpq-dev zip unzip git curl gnupg procps
+# Use official PHP extension installer
+ADD --chmod=0755 https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
 
-# Install PHP extensions
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j$(nproc) gd pdo_mysql pdo_pgsql pgsql bcmath intl zip opcache mbstring xml
+# Install system dependencies and PHP extensions
+RUN apt-get update && apt-get install -y \
+    zip unzip git curl gnupg procps \
+    && install-php-extensions gd pdo_mysql pdo_pgsql pgsql bcmath intl zip opcache mbstring xml
 
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite
@@ -47,7 +48,7 @@ RUN a2enmod rewrite
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy everything from the build stage (including vendor and built assets)
+# Copy everything from the build stage
 COPY --from=build /app /var/www/html
 
 # Set permissions
@@ -60,6 +61,9 @@ RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available
 
 # Set environment for Render port
 ENV PORT=10000
+
+# Debugging: show loaded modules in final image
+RUN php -m
 
 # Copy and prepare entrypoint script
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
