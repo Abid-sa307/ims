@@ -37,6 +37,7 @@ class PurchaseOrderController extends Controller
             'additional_charges' => 'required|numeric|min:0',
             'grand_total' => 'required|numeric|min:0',
             'remarks' => 'nullable|string',
+            'is_auto_approved' => 'nullable|boolean',
             'items' => 'required|array|min:1',
             'items.*.item_id' => 'required|exists:items,id',
             'items.*.uom' => 'required|string',
@@ -76,7 +77,8 @@ class PurchaseOrderController extends Controller
                 'grand_total' => $validated['grand_total'],
                 'total_amount' => $validated['grand_total'], // Legacy column mapping
                 'remarks' => $validated['remarks'] ?? null,
-                'status' => 'pending'
+                'status' => ($validated['is_auto_approved'] ?? false) ? 'approved' : 'pending',
+                'is_auto_approved' => $validated['is_auto_approved'] ?? false
             ]);
 
             foreach ($validated['items'] as $itemData) {
@@ -97,6 +99,14 @@ class PurchaseOrderController extends Controller
         $approvedPOs = PurchaseOrder::with('supplier')->where('status', 'approved')->latest()->get();
         return Inertia::render('Purchase/ApprovedPO', [
             'purchaseOrders' => $approvedPOs
+        ]);
+    }
+
+    public function autoApprovedPOs()
+    {
+        $autoApprovedPOs = PurchaseOrder::with('supplier')->where('is_auto_approved', true)->latest()->get();
+        return Inertia::render('Purchase/AutoApprovedPO', [
+            'purchaseOrders' => $autoApprovedPOs
         ]);
     }
 }

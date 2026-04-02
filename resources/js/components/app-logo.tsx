@@ -7,7 +7,7 @@ export default function AppLogo() {
                 <AppLogoIcon className="size-5 fill-current text-white dark:text-black" />
             </div>
             <div className="ml-1 grid flex-1 text-left text-sm">
-                <span className="mb-0.5 truncate leading-tight font-semibold italic uppercase tracking-tighter text-[#162a5b]">
+                <span className="mb-0.5 truncate leading-tight font-semibold  uppercase tracking-tighter text-[#00000]">
                     Project IMS
                 </span>
             </div>

@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { TrendingUp, ShoppingBag, Plus, Truck, Settings, Users, MonitorSmartphone, DollarSign, Database, Shield, Box, Activity, LogOut, Search, Settings2, BarChart2, Bell, Map, Frame, MapPin, Grid, Layers, Zap, Tags, LayoutGrid, ShoppingCart, Store, FileText, Factory, Utensils, ClipboardList, Package, ListChecks, FileInput, FileOutput, CreditCard, Banknote, FileBarChart, PieChart } from 'lucide-react';
+import { TrendingUp, ShoppingBag, Plus, Truck, Settings, Users, MonitorSmartphone, DollarSign, Database, Shield, Box, Activity, LogOut, Search, Settings2, BarChart2, Bell, Map, Frame, MapPin, Grid, Layers, Zap, Tags, LayoutGrid, ShoppingCart, Store, FileText, Factory, Utensils, ClipboardList, Package, ListChecks, FileInput, FileOutput, CreditCard, Banknote, FileBarChart, PieChart, Archive } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -27,9 +27,47 @@ const mainNavItems: NavItem[] = [
         icon: Activity,
     },
     {
-        title: 'Item Master',
-        href: '/master/item-master',
-        icon: Box,
+        title: 'Inventory Management',
+        href: '#',
+        icon: Archive,
+        items: [
+            {
+                title: 'Item Master',
+                href: '/master/item-master',
+            },
+            {
+                title: 'Supplier Master',
+                href: '/master/supplier-master',
+            },
+            {
+                title: 'Item Category',
+                href: '/inventory/item-category',
+            },
+            {
+                title: 'Item Sub Category',
+                href: '/inventory/item-sub-category',
+            },
+            {
+                title: 'Item Type',
+                href: '/inventory/item-type',
+            },
+            {
+                title: 'UOM Master',
+                href: '/inventory/uom-master',
+            },
+            {
+                title: 'Warehouse Master',
+                href: '/inventory/warehouse-master',
+            },
+            {
+                title: 'Item Supplier Master',
+                href: '/inventory/item-supplier-mapping',
+            },
+            {
+                title: 'Item Warehouse Mapping',
+                href: '/inventory/item-warehouse-mapping',
+            },
+        ],
     },
     {
         title: 'General Configuration',
@@ -39,10 +77,6 @@ const mainNavItems: NavItem[] = [
             {
                 title: 'Customer Master',
                 href: '/config/customer-master',
-            },
-            {
-                title: 'Supplier Master',
-                href: '/master/supplier-master',
             },
             {
                 title: 'Location Master',
@@ -74,6 +108,10 @@ const mainNavItems: NavItem[] = [
                 title: 'Template Master',
                 href: '/invoice/template-master',
             },
+            {
+                title: 'Invoices Template',
+                href: '/invoice/invoices-template',
+            },
         ],
     },
     {
@@ -94,6 +132,10 @@ const mainNavItems: NavItem[] = [
                 href: '/purchase/approved-po',
             },
             {
+                title: 'Auto Approved PO',
+                href: '/purchase/auto-approved-po',
+            },
+            {
                 title: 'Send PO to Supplier',
                 href: '/purchase/send-po',
             },
@@ -103,7 +145,7 @@ const mainNavItems: NavItem[] = [
             },
             {
                 title: 'Debit Note TO Supplier',
-                href: '/purchase/debit-note',
+                href: '/purchase/generate-debit-note',
             },
             {
                 title: 'Payment Entry to Supplier',

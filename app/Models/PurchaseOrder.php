@@ -10,7 +10,7 @@ class PurchaseOrder extends Model
         'order_number', 'supplier_id', 'total_amount', 'status',
         'location_id', 'reference_bill_no', 'reference_challan_no',
         'po_date', 'exp_order_date', 'inv_date', 'discount_amount',
-        'total_tax_amount', 'additional_charges', 'grand_total', 'remarks'
+        'total_tax_amount', 'additional_charges', 'grand_total', 'remarks', 'is_auto_approved'
     ];
 
     public function supplier()

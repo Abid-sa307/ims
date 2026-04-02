@@ -21,16 +21,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('invoice/custom-field-group', \App\Http\Controllers\CustomFieldGroupController::class);
     Route::get('invoice/template-master', [\App\Http\Controllers\SettingController::class, 'templateMaster'])->name('invoice.template-master');
     Route::post('invoice/template-master', [\App\Http\Controllers\SettingController::class, 'saveTemplate'])->name('invoice.template-master.save');
+    Route::inertia('invoice/invoices-template', 'Invoice/InvoicesTemplate')->name('invoice.invoices-template');
 
     // Purchase Management
     Route::get('purchase/generate-po', [\App\Http\Controllers\PurchaseOrderController::class, 'create'])->name('purchase.generate-po');
     Route::post('purchase/generate-po', [\App\Http\Controllers\PurchaseOrderController::class, 'store'])->name('purchase.generate-po.store');
     Route::inertia('purchase/summary', 'Purchase/Summary')->name('purchase.summary');
     Route::get('purchase/approved-po', [\App\Http\Controllers\PurchaseOrderController::class, 'approvedPOs'])->name('purchase.approved-po');
+    Route::get('purchase/auto-approved-po', [\App\Http\Controllers\PurchaseOrderController::class, 'autoApprovedPOs'])->name('purchase.auto-approved-po');
     Route::inertia('purchase/send-po', 'Purchase/SendPO')->name('purchase.send-po');
     Route::inertia('purchase/received-po', 'Purchase/ReceivedPO')->name('purchase.received-po');
     Route::get('purchase/debit-note', [\App\Http\Controllers\DebitNoteController::class, 'index'])->name('purchase.debit-note.index');
-    Route::post('purchase/debit-note', [\App\Http\Controllers\DebitNoteController::class, 'store'])->name('purchase.debit-note.store');
+    Route::get('purchase/generate-debit-note', [\App\Http\Controllers\DebitNoteController::class, 'create'])->name('purchase.debit-note.create');
+    Route::post('purchase/generate-debit-note', [\App\Http\Controllers\DebitNoteController::class, 'store'])->name('purchase.debit-note.store');
     Route::inertia('purchase/payment-entry', 'Purchase/PaymentEntry')->name('purchase.payment-entry');
 
     // Sales Management
@@ -57,6 +60,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('master/location-master', \App\Http\Controllers\LocationController::class);
     Route::post('master/item-master/import', [\App\Http\Controllers\ItemController::class, 'import'])->name('master.item-master.import');
     Route::resource('master/item-master', \App\Http\Controllers\ItemController::class);
+
+    // Inventory Management
+    Route::prefix('inventory')->group(function () {
+        Route::resource('item-category', \App\Http\Controllers\ItemCategoryController::class);
+        Route::resource('item-sub-category', \App\Http\Controllers\ItemSubCategoryController::class);
+        Route::resource('item-type', \App\Http\Controllers\ItemTypeController::class);
+        Route::resource('uom-master', \App\Http\Controllers\UomController::class);
+        Route::resource('warehouse-master', \App\Http\Controllers\WarehouseController::class);
+        Route::resource('item-supplier-mapping', \App\Http\Controllers\ItemSupplierMappingController::class);
+        Route::resource('item-warehouse-mapping', \App\Http\Controllers\ItemWarehouseMappingController::class);
+    });
 });
 
 require __DIR__ . '/settings.php';

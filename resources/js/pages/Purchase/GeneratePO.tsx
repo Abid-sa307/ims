@@ -4,7 +4,7 @@ import { BreadcrumbItem } from '@/types';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Calendar, MessageSquare, PlusCircle, Trash2, List } from 'lucide-react';
+import { Calendar, MessageSquare, PlusCircle, Trash2, List, Zap } from 'lucide-react';
 import { useEffect } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -28,6 +28,7 @@ export default function GeneratePO() {
         additional_charges: 0,
         grand_total: 0,
         remarks: '',
+        is_auto_approved: false,
         items: [
             {
                 item_id: '',
@@ -135,7 +136,7 @@ export default function GeneratePO() {
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(route('purchase.generate-po.store'));
+        post('/purchase/generate-po');
     };
 
     // Calculate sum of base prices (Price * Qty strictly)
@@ -312,9 +313,23 @@ export default function GeneratePO() {
 
                 {/* Footer Buttons */}
                 <div className="flex flex-col sm:flex-row justify-between items-end gap-6 mt-10 pt-6 border-t border-gray-100">
-                    <div className="w-full sm:flex-1 max-w-2xl">
-                        <Label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 block">Order Remarks / Internal Notes</Label>
-                        <Input value={data.remarks} onChange={e => setData('remarks', e.target.value)} className="bg-white text-gray-700 h-11 w-full rounded-xl" placeholder="Type any specific instructions..." />
+                    <div className="w-full sm:flex-1 max-w-2xl flex flex-col gap-4">
+                        <div>
+                            <Label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 block">Order Remarks / Internal Notes</Label>
+                            <Input value={data.remarks} onChange={e => setData('remarks', e.target.value)} className="bg-white text-gray-700 h-11 w-full rounded-xl" placeholder="Type any specific instructions..." />
+                        </div>
+                        <div className="flex items-center gap-3 bg-indigo-50/50 p-4 rounded-xl border border-indigo-100/50 w-fit">
+                            <input 
+                                type="checkbox" 
+                                id="auto_approve"
+                                checked={data.is_auto_approved} 
+                                onChange={e => setData('is_auto_approved', e.target.checked)}
+                                className="size-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                            />
+                            <Label htmlFor="auto_approve" className="text-xs font-bold text-indigo-900 cursor-pointer flex items-center gap-2">
+                                <Zap className="size-3" /> AUTO APPROVE THIS PURCHASE ORDER
+                            </Label>
+                        </div>
                     </div>
 
                     <Button type="submit" disabled={processing} className="bg-[#5cb85c] hover:bg-[#4cae4c] text-white font-black italic uppercase px-12 h-11 text-xs rounded-xl shadow-lg">
