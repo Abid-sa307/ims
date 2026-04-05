@@ -196,8 +196,38 @@ const mainNavItems: NavItem[] = [
     },
     {
         title: 'Stock Management',
-        href: '/operations/stock-management',
-        icon: Box,
+        href: '#',
+        icon: Package,
+        items: [
+            {
+                title: 'Current Stock',
+                href: '/stock/current-stock',
+            },
+            {
+                title: 'Wastage Entry',
+                href: '/stock/wastage-entry',
+            },
+            {
+                title: 'Stock Transfer',
+                href: '/stock/stock-transfer',
+            },
+            {
+                title: 'Stock Transfer Wastage',
+                href: '/stock/transfer-report',
+            },
+            {
+                title: 'Stock Adjustment',
+                href: '/stock/adjustment',
+            },
+            {
+                title: 'Physical Stock Entry',
+                href: '/stock/physical-frequency',
+            },
+            {
+                title: 'Physical Stock Entry Report',
+                href: '/stock/physical-entry',
+            },
+        ],
     },
     {
         title: 'Payment Management',

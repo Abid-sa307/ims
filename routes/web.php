@@ -47,6 +47,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Operations
     Route::inertia('operations/production', 'Operations/Production')->name('operations.production');
     Route::inertia('operations/recipe', 'Operations/Recipe')->name('operations.recipe');
+    Route::get('stock/current-stock', [\App\Http\Controllers\StockController::class, 'currentStock'])->name('stock.current-stock');
+    Route::get('stock/wastage-entry', [\App\Http\Controllers\StockController::class, 'wastageEntry'])->name('stock.wastage-entry');
+    Route::post('stock/wastage-entry', [\App\Http\Controllers\StockController::class, 'storeWastageEntry'])->name('stock.wastage-entry.store');
+    Route::get('stock/stock-transfer', [\App\Http\Controllers\StockController::class, 'stockTransfer'])->name('stock.stock-transfer');
+    Route::post('stock/stock-transfer', [\App\Http\Controllers\StockController::class, 'storeStockTransfer'])->name('stock.stock-transfer.store');
+    Route::get('stock/transfer-report', [\App\Http\Controllers\StockController::class, 'stockTransferReport'])->name('stock.transfer-report');
+    Route::get('stock/adjustment', [\App\Http\Controllers\StockController::class, 'stockAdjustment'])->name('stock.adjustment');
+    Route::post('stock/adjustment', [\App\Http\Controllers\StockController::class, 'storeStockAdjustment'])->name('stock.adjustment.store');
+    Route::get('stock/physical-frequency', [\App\Http\Controllers\StockController::class, 'physicalStockFrequency'])->name('stock.physical-frequency');
+    Route::post('stock/physical-frequency', [\App\Http\Controllers\StockController::class, 'storePhysicalStockFrequency'])->name('stock.physical-frequency.store');
+    Route::get('stock/physical-entry', [\App\Http\Controllers\StockController::class, 'physicalStockEntryReport'])->name('stock.physical-entry');
+    Route::post('stock/physical-entry', [\App\Http\Controllers\StockController::class, 'storePhysicalStockEntryReport'])->name('stock.physical-entry.store');
     Route::inertia('operations/stock-management', 'Operations/StockManagement')->name('operations.stock-management');
     Route::inertia('operations/payment-management', 'Operations/PaymentManagement')->name('operations.payment-management');
     Route::inertia('operations/kitchen-register', 'Operations/KitchenRegister')->name('operations.kitchen-register');
