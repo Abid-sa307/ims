@@ -17,7 +17,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 interface Location { id: number; location_legal_name: string; }
-interface Warehouse { id: number; name: string; }
+interface Warehouse { id: number; name: string; location_id: number; }
 interface Item { 
     id: number; 
     item_name: string; 

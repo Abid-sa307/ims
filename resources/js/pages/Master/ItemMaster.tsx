@@ -164,6 +164,21 @@ export default function ItemMaster({
         }
     };
 
+    const handleImportButtonClick = () => {
+        importFileInputRef.current?.click();
+    };
+
+    const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            router.post('/master/item-master/import', { file }, {
+                onSuccess: () => {
+                    if (importFileInputRef.current) importFileInputRef.current.value = '';
+                },
+            });
+        }
+    };
+
     const handleEdit = (item: Item) => {
         setEditingId(item.id);
         setData({
@@ -197,6 +212,20 @@ export default function ItemMaster({
                         <p className="text-sm text-slate-500">Manage your product inventory and specifications</p>
                     </div>
                     <div className="flex gap-3">
+                        <input 
+                            type="file" 
+                            ref={importFileInputRef} 
+                            onChange={handleImportFile} 
+                            className="hidden" 
+                            accept=".xlsx,.xls,.csv"
+                        />
+                        <Button 
+                            variant="outline" 
+                            className="bg-white border-slate-200 hover:bg-slate-50 text-slate-700"
+                            onClick={handleImportButtonClick}
+                        >
+                            <FileUp className="mr-2 h-4 w-4" /> Import Excel
+                        </Button>
                         <Button 
                             variant="outline" 
                             className="bg-white border-slate-200 hover:bg-slate-50 text-slate-700"

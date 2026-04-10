@@ -19,11 +19,6 @@ const mainNavItems: NavItem[] = [
     {
         title: 'Dashboard',
         href: dashboard(),
-        icon: LayoutGrid,
-    },
-    {
-        title: 'B2B Dashboard',
-        href: '/b2b-dashboard',
         icon: Activity,
     },
     {
@@ -74,10 +69,6 @@ const mainNavItems: NavItem[] = [
         href: '#',
         icon: Settings,
         items: [
-            {
-                title: 'Customer Master',
-                href: '/config/customer-master',
-            },
             {
                 title: 'Location Master',
                 href: '/master/location-master',
@@ -186,8 +177,22 @@ const mainNavItems: NavItem[] = [
     },
     {
         title: 'Production',
-        href: '/operations/production',
+        href: '#',
         icon: Factory,
+        items: [
+            {
+                title: 'Production Planning',
+                href: '/operations/production-planning',
+            },
+            {
+                title: 'Item Manufacturing',
+                href: '/operations/production-entry',
+            },
+            {
+                title: 'Multiple Manufacturing',
+                href: '/operations/multiple-manufacturing',
+            },
+        ],
     },
     {
         title: 'Recipe',

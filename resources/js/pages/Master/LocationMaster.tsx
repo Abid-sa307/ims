@@ -171,7 +171,7 @@ export default function LocationMaster({ locations = [] }: { locations: Location
                     <div className="flex items-center justify-between">
                         <div>
                             <h1 className="text-xl font-bold tracking-tight text-gray-900">Location Master</h1>
-                            <p className="text-sm text-gray-500">Manage all your franchise, company, and operating locations here.</p>
+                            <p className="text-sm text-gray-500">Manage all your B2B and Customer locations here.</p>
                         </div>
                         <Button onClick={handleCreateNew} className="bg-[#162a5b] hover:bg-[#162a5b]/90 gap-2">
                             <PlusCircle className="size-4" />
@@ -284,8 +284,8 @@ export default function LocationMaster({ locations = [] }: { locations: Location
                                 <Select value={data.location_type} onValueChange={v => setData('location_type', v)}>
                                     <SelectTrigger><SelectValue placeholder="--Please Select--"/></SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="Franchise">Franchise</SelectItem>
-                                        <SelectItem value="Company Owned">Company Owned</SelectItem>
+                                        <SelectItem value="B2B">B2B</SelectItem>
+                                        <SelectItem value="Customer">Customer</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>

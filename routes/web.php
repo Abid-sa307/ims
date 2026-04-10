@@ -8,11 +8,12 @@ Route::inertia('/', 'welcome', [
 ])->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::inertia('dashboard', 'dashboard')->name('dashboard');
-    Route::inertia('b2b-dashboard', 'b2b-dashboard')->name('b2b-dashboard');
+    Route::get('dashboard', [\App\Http\Controllers\DashboardController::class, 'dashboard'])->name('dashboard');
+    // Remove individual b2b-dashboard as it's now the main dashboard
+
 
     // General Configuration
-    Route::resource('config/customer-master', \App\Http\Controllers\CustomerController::class);
+    // Removed customer-master resource as it's consolidated into location-master
 
     // User Configuration
     Route::resource('config/user-master', \App\Http\Controllers\UserController::class);
@@ -46,6 +47,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Operations
     Route::inertia('operations/production', 'Operations/Production')->name('operations.production');
+    Route::inertia('operations/production-planning', 'Operations/ProductionPlanning')->name('operations.production-planning');
+    Route::inertia('operations/production-entry', 'Operations/ProductionEntry')->name('operations.production-entry');
+    Route::inertia('operations/multiple-manufacturing', 'Operations/MultipleManufacturing')->name('operations.multiple-manufacturing');
     Route::inertia('operations/recipe', 'Operations/Recipe')->name('operations.recipe');
     Route::get('stock/current-stock', [\App\Http\Controllers\StockController::class, 'currentStock'])->name('stock.current-stock');
     Route::get('stock/wastage-entry', [\App\Http\Controllers\StockController::class, 'wastageEntry'])->name('stock.wastage-entry');
