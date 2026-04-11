@@ -68,8 +68,29 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('operations/kitchen-register', 'Operations/KitchenRegister')->name('operations.kitchen-register');
 
     // Reports
-    Route::inertia('reports/purchase', 'Reports/PurchaseReport')->name('reports.purchase');
-    Route::inertia('reports/stock', 'Reports/StockReport')->name('reports.stock');
+    Route::prefix('reports')->group(function () {
+        // Purchase Reports
+        Route::get('purchase/order-summary', [\App\Http\Controllers\ReportController::class, 'purchaseOrderSummary'])->name('reports.purchase.order-summary');
+        Route::get('purchase/hsn-summary', [\App\Http\Controllers\ReportController::class, 'purchaseHsnSummary'])->name('reports.purchase.hsn-summary');
+        Route::get('purchase/item-wise', [\App\Http\Controllers\ReportController::class, 'itemWisePurchase'])->name('reports.purchase.item-wise');
+        Route::get('purchase/debit-note-register', [\App\Http\Controllers\ReportController::class, 'debitNoteRegister'])->name('reports.purchase.debit-note-register');
+        Route::get('purchase/price-deviation', [\App\Http\Controllers\ReportController::class, 'priceDeviation'])->name('reports.purchase.price-deviation');
+        
+        // Sales Reports
+        Route::get('sales/summary', [\App\Http\Controllers\ReportController::class, 'salesSummary'])->name('reports.sales.summary');
+        Route::get('sales/item-wise', [\App\Http\Controllers\ReportController::class, 'itemWiseSales'])->name('reports.sales.item-wise');
+        Route::get('sales/customer-wise', [\App\Http\Controllers\ReportController::class, 'customerWiseSales'])->name('reports.sales.customer-wise');
+        Route::get('sales/date-wise', [\App\Http\Controllers\ReportController::class, 'dateWiseSales'])->name('reports.sales.date-wise');
+        Route::get('sales/credit-note-register', [\App\Http\Controllers\ReportController::class, 'creditNoteRegister'])->name('reports.sales.credit-note-register');
+        Route::get('sales/price-deviation', [\App\Http\Controllers\ReportController::class, 'priceDeviationSales'])->name('reports.sales.price-deviation');
+        
+        // Stock Reports
+        Route::get('stock/valuation', [\App\Http\Controllers\ReportController::class, 'stockValuation'])->name('reports.stock.valuation');
+        
+        // Redirect legacy routes
+        Route::get('purchase', function() { return redirect()->route('reports.purchase.order-summary'); });
+        Route::get('stock', function() { return redirect()->route('reports.stock.valuation'); });
+    });
 
     // Legacy/Master Routes
     Route::resource('master/supplier-master', \App\Http\Controllers\SupplierController::class);

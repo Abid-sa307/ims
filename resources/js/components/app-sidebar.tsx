@@ -245,14 +245,77 @@ const mainNavItems: NavItem[] = [
         icon: ClipboardList,
     },
     {
-        title: 'Purchase report',
-        href: '/reports/purchase',
-        icon: FileBarChart,
+        title: 'Sales Reports',
+        href: '#',
+        icon: Tags,
+        items: [
+            {
+                title: 'Sales Summary',
+                href: '/reports/sales/summary',
+            },
+            {
+                title: 'Item Wise Sales Report',
+                href: '/reports/sales/item-wise',
+            },
+            {
+                title: 'Date Wise Item Sales Report',
+                href: '/reports/sales/date-wise',
+            },
+            {
+                title: 'Customer Wise Sales Report',
+                href: '/reports/sales/customer-wise',
+            },
+            {
+                title: 'Credit Note Register',
+                href: '/reports/sales/credit-note-register',
+            },
+            {
+                title: 'Price Deviation For Sales',
+                href: '/reports/sales/price-deviation',
+            },
+        ],
     },
     {
-        title: 'Stock Report',
-        href: '/reports/stock',
+        title: 'Purchase Reports',
+        href: '#',
+        icon: FileBarChart,
+        items: [
+            {
+                title: 'Purchase Order Summary',
+                href: '/reports/purchase/order-summary',
+            },
+            {
+                title: 'Purchase HSN Summary Report',
+                href: '/reports/purchase/hsn-summary',
+            },
+            {
+                title: 'Item Wise Purchase Report',
+                href: '/reports/purchase/item-wise',
+            },
+            {
+                title: 'Debitnote Register',
+                href: '/reports/purchase/debit-note-register',
+            },
+            {
+                title: 'Price Deviation For All Location',
+                href: '/reports/purchase/price-deviation',
+            },
+        ],
+    },
+    {
+        title: 'Stock Reports',
+        href: '#',
         icon: PieChart,
+        items: [
+            {
+                title: 'Stock Valuation Report',
+                href: '/reports/stock/valuation',
+            },
+            {
+                title: 'Current Stock',
+                href: '/stock/current-stock',
+            },
+        ],
     },
 ];
 
