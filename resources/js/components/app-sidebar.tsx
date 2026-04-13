@@ -316,6 +316,10 @@ const mainNavItems: NavItem[] = [
         icon: PieChart,
         items: [
             {
+                title: 'Stock Listing Report',
+                href: '/reports/stock/listing',
+            },
+            {
                 title: 'Stock Valuation Report',
                 href: '/reports/stock/valuation',
             },

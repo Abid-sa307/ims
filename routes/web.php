@@ -87,6 +87,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('sales/outstanding', [\App\Http\Controllers\ReportController::class, 'outstandingSales'])->name('reports.sales.outstanding');
         
         // Stock Reports
+        Route::get('stock/listing', [\App\Http\Controllers\ReportController::class, 'stockListing'])->name('reports.stock.listing');
         Route::get('stock/valuation', [\App\Http\Controllers\ReportController::class, 'stockValuation'])->name('reports.stock.valuation');
         
         // Redirect legacy routes
