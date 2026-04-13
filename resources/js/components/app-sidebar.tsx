@@ -348,7 +348,7 @@ export function AppSidebar() {
                 </SidebarMenu>
             </SidebarHeader>
 
-            <SidebarContent>
+            <SidebarContent className="overflow-y-auto min-h-0">
                 <NavMain items={mainNavItems} />
             </SidebarContent>
 

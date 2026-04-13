@@ -1,15 +1,13 @@
-import React, { useState } from 'react';
-import { Head, usePage, useForm } from '@inertiajs/react';
+import React, { useState, useEffect } from 'react';
+import { Head, useForm, usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { MapPin, User, FileText, Settings, Navigation, Save, X, List, PlusCircle, Pencil, Trash2 } from 'lucide-react';
+import { MapPin, Save, X, PlusCircle, Pencil, Trash2, Navigation, Plus, Minus, Building2, Mail, Phone, FileText, Settings2, Lock } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -19,29 +17,71 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 interface Location {
     id: number;
+    location_type: string | null;
     location_legal_name: string;
     city: string | null;
     contact_number: string | null;
     email: string | null;
-    created_at: string;
-    // ... other fields are hidden in list view
 }
 
-export default function LocationMaster({ locations = [] }: { locations: Location[] }) {
+interface Supplier {
+    id: number;
+    supplier_name: string;
+}
+
+const statesOfIndia = [
+    'Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh','Goa','Gujarat',
+    'Haryana','Himachal Pradesh','Jharkhand','Karnataka','Kerala','Madhya Pradesh',
+    'Maharashtra','Manipur','Meghalaya','Mizoram','Nagaland','Odisha','Punjab',
+    'Rajasthan','Sikkim','Tamil Nadu','Telangana','Tripura','Uttar Pradesh',
+    'Uttarakhand','West Bengal','Delhi','Jammu and Kashmir','Ladakh',
+];
+
+// Section heading component
+function SectionHeading({ icon: Icon, title, subtitle }: { icon: any; title: string; subtitle?: string }) {
+    return (
+        <div className="flex items-center gap-3 mb-5">
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#162a5b]/10">
+                <Icon className="size-4 text-[#162a5b]" />
+            </div>
+            <div>
+                <h3 className="text-sm font-bold text-[#162a5b]">{title}</h3>
+                {subtitle && <p className="text-[11px] text-gray-400">{subtitle}</p>}
+            </div>
+        </div>
+    );
+}
+
+// Field component for consistent styling
+function Field({ label, required, error, children }: { label: string; required?: boolean; error?: string; children: React.ReactNode }) {
+    return (
+        <div className="space-y-1.5">
+            <Label className="text-[12px] font-semibold text-gray-600 uppercase tracking-wide">
+                {label}{required && <span className="text-red-500 ml-0.5">*</span>}
+            </Label>
+            {children}
+            {error && <p className="text-[11px] text-red-500 font-medium">{error}</p>}
+        </div>
+    );
+}
+
+export default function LocationMaster({ locations = [], suppliers = [] }: { locations: Location[]; suppliers: Supplier[] }) {
     const [viewMode, setViewMode] = useState<'list' | 'form'>('list');
     const [isEditing, setIsEditing] = useState(false);
+    const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+    const [ccEmailInput, setCcEmailInput] = useState('');
+    const [ccEmails, setCcEmails] = useState<string[]>([]);
 
     const { data, setData, post, put, delete: destroy, processing, errors, reset, clearErrors } = useForm({
         id: null as number | null,
         location_type: '',
-        franchise_type: '',
         location_legal_name: '',
         short_name: '',
         contact_person_name: '',
         contact_number: '',
         email: '',
-        time_zone: '',
-        country: '',
+        time_zone: 'Asia/Kolkata',
+        country: 'India',
         state: '',
         city: '',
         pincode: '',
@@ -53,513 +93,450 @@ export default function LocationMaster({ locations = [] }: { locations: Location
         tin_no: '',
         vat_no: '',
         pf_no: '',
-        royalty_percent: '',
-        royalty_frequency: '',
-        allow_order_types: [] as string[],
-        default_order_type: '',
-        allow_payment_types: [] as string[],
-        default_payment_type: '',
-        start_bill_no: '',
-        default_delivery_charge: '',
-        round_off_option: '',
-        order_cancellation_duration: '',
-        time_duration_to_edit_order: '',
-        token_refreshment: '',
-        po_number_format: '',
-        common_preferences: '',
         fssai_number: '',
-        end_day_process_time: '',
-        opening_time: '',
-        closing_time: '',
-        business_id: '',
-        product_sorting: '',
-        custom_sales_invoice_series: false,
-        specify_reason_for_order_cancellation: false,
-        specify_reason_for_item_cancellation: false,
-        sms_for_daily_sales_summary: false,
-        employee_productivity_monitoring: false,
-        test_mode: false,
-        print_without_settlement: false,
-        show_delivery_charge_on_billing: false,
-        is_print_on_dispatch: false,
-        strict_permission_email_purchase_order: false,
-        display_location_on_dashboard: false,
-        allow_order_modification_after_bill_print: false,
-        enable_bank_deposit: false,
-        allow_negative_sale: false,
-        allow_email_notification_on_stock_transfer: false,
-        enable_kds: false,
-        print_item_wise_kot: false,
-        enable_zomato_swiggy_integration: false,
-        enable_otp_verification_for_order_discount: false,
-        print_shift_report: false,
-        combine_kot_print_on_save_order: false,
+        email_sales_order: false,
+        invoice_cc_emails: [] as string[],
         supplier_id: '',
         default_warehouse_name: '',
-        enable_petty_cash: false,
         route: '',
         latitude: '',
-        longitude: ''
+        longitude: '',
+        strict_permission_email_purchase_order: false,
+        allow_email_notification_on_stock_transfer: false,
+        email_po_approval: '',
+        email_so_approval: '',
     });
 
+    // Auto-sync warehouse name with location legal name
+    useEffect(() => {
+        setData('default_warehouse_name', data.location_legal_name);
+    }, [data.location_legal_name]);
+
+    const validate = () => {
+        const errs: Record<string, string> = {};
+        if (!data.location_type) errs.location_type = 'Location type is required.';
+        if (!data.location_legal_name.trim()) errs.location_legal_name = 'Location legal name is required.';
+        if (!data.contact_number.trim()) errs.contact_number = 'Contact number is required.';
+        if (!data.state) errs.state = 'State is required.';
+        if (!data.city.trim()) errs.city = 'City is required.';
+        setValidationErrors(errs);
+        return Object.keys(errs).length === 0;
+    };
+
     const handleCreateNew = () => {
-        reset();
-        clearErrors();
-        setIsEditing(false);
-        setViewMode('form');
+        reset(); clearErrors(); setValidationErrors({});
+        setCcEmails([]); setCcEmailInput('');
+        setIsEditing(false); setViewMode('form');
     };
 
     const handleEdit = (location: any) => {
-        setData({
-            ...data,
-            ...location, // Populate form with existing data
-            allow_order_types: location.allow_order_types ? (typeof location.allow_order_types === 'string' ? JSON.parse(location.allow_order_types) : location.allow_order_types) : [],
-            allow_payment_types: location.allow_payment_types ? (typeof location.allow_payment_types === 'string' ? JSON.parse(location.allow_payment_types) : location.allow_payment_types) : []
-        });
-        setIsEditing(true);
-        setViewMode('form');
+        const existing = Array.isArray(location.invoice_cc_emails) ? location.invoice_cc_emails : [];
+        setData({ ...data, ...location, invoice_cc_emails: existing });
+        setCcEmails(existing); setCcEmailInput(''); setValidationErrors({});
+        setIsEditing(true); setViewMode('form');
     };
 
     const handleDelete = (id: number) => {
         if (confirm('Are you sure you want to delete this location?')) {
-            destroy(`/master/location-master/${id}`, {
-                preserveScroll: true,
-                onSuccess: () => {
-                    if (viewMode === 'form') {
-                        setViewMode('list');
-                        reset();
-                    }
-                }
-            });
+            destroy(`/master/location-master/${id}`, { preserveScroll: true });
         }
+    };
+
+    const addCcEmail = () => {
+        const trimmed = ccEmailInput.trim();
+        if (!trimmed || ccEmails.includes(trimmed)) return;
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) return;
+        const updated = [...ccEmails, trimmed];
+        setCcEmails(updated); setData('invoice_cc_emails', updated); setCcEmailInput('');
+    };
+
+    const removeCcEmail = (email: string) => {
+        const updated = ccEmails.filter(e => e !== email);
+        setCcEmails(updated); setData('invoice_cc_emails', updated);
     };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (isEditing && data.id) {
-            put(`/master/location-master/${data.id}`, {
-                onSuccess: () => {
-                    reset();
-                    setViewMode('list');
-                }
-            });
-        } else {
-            post('/master/location-master', {
-                onSuccess: () => {
-                    reset();
-                    setViewMode('list');
-                }
-            });
-        }
+        if (!validate()) return;
+        const options = { onSuccess: () => { reset(); setCcEmails([]); setViewMode('list'); } };
+        if (isEditing && data.id) put(`/master/location-master/${data.id}`, options);
+        else post('/master/location-master', options);
     };
 
-    const toggleArrayItem = (field: 'allow_order_types' | 'allow_payment_types', value: string) => {
-        const currentArr = data[field] || [];
-        if (currentArr.includes(value)) {
-            setData(field, currentArr.filter((i) => i !== value));
-        } else {
-            setData(field, [...currentArr, value]);
-        }
-    };
+    const err = (field: string) => validationErrors[field] || (errors as any)[field];
+    const isCustomer = data.location_type === 'Customer';
+    const isHQ = data.location_type === 'HQ';
 
-    // View: List
+    // ─── LIST VIEW ────────────────────────────────────────────
     if (viewMode === 'list') {
         return (
             <AppLayout breadcrumbs={breadcrumbs}>
                 <Head title="Location Master" />
-                <div className="flex flex-col gap-6 p-6">
-                    <div className="flex items-center justify-between">
+                <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20 p-6">
+                    {/* Hero Header */}
+                    <div className="flex items-center justify-between mb-8">
                         <div>
-                            <h1 className="text-xl font-bold tracking-tight text-gray-900">Location Master</h1>
-                            <p className="text-sm text-gray-500">Manage all your B2B and Customer locations here.</p>
+                            <div className="flex items-center gap-3 mb-1">
+                                <div className="p-2 rounded-xl bg-[#162a5b] shadow-lg">
+                                    <MapPin className="size-5 text-white" />
+                                </div>
+                                <h1 className="text-2xl font-black tracking-tight text-[#162a5b]">Location Master</h1>
+                            </div>
+                            <p className="text-sm text-gray-500 ml-12">Manage Customer and HQ locations. Each location auto-creates a warehouse &amp; supplier.</p>
                         </div>
-                        <Button onClick={handleCreateNew} className="bg-[#162a5b] hover:bg-[#162a5b]/90 gap-2">
-                            <PlusCircle className="size-4" />
-                            Add Location
+                        <Button onClick={handleCreateNew} className="bg-[#162a5b] hover:bg-[#1e3a7b] text-white shadow-lg gap-2 h-10 px-5 font-bold">
+                            <PlusCircle className="size-4" /> Add Location
                         </Button>
                     </div>
 
-                    <Card className="border-gray-100 shadow-sm">
-                        <CardContent className="p-0">
-                            <Table>
-                                <TableHeader className="bg-gray-50/50">
-                                    <TableRow>
-                                        <TableHead className="font-semibold text-gray-900">Location Name</TableHead>
-                                        <TableHead className="font-semibold text-gray-900">City</TableHead>
-                                        <TableHead className="font-semibold text-gray-900">Contact</TableHead>
-                                        <TableHead className="font-semibold text-gray-900 text-right">Actions</TableHead>
+                    {/* Stats cards */}
+                    <div className="grid grid-cols-3 gap-4 mb-6">
+                        {[
+                            { label: 'Total Locations', value: locations.length, color: 'from-blue-600 to-[#162a5b]' },
+                            { label: 'Customer Locations', value: locations.filter(l => l.location_type === 'Customer').length, color: 'from-emerald-500 to-teal-700' },
+                            { label: 'HQ Locations', value: locations.filter(l => l.location_type === 'HQ').length, color: 'from-violet-500 to-purple-700' },
+                        ].map(stat => (
+                            <div key={stat.label} className={`bg-gradient-to-br ${stat.color} rounded-2xl p-5 text-white shadow-md`}>
+                                <p className="text-3xl font-black">{stat.value}</p>
+                                <p className="text-xs font-bold opacity-80 mt-1 uppercase tracking-wide">{stat.label}</p>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Table */}
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div className="px-6 py-4 border-b border-gray-50 bg-gray-50/50">
+                            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">All Locations</p>
+                        </div>
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="bg-slate-50/80">
+                                    <TableHead className="font-black text-[11px] uppercase tracking-wider text-gray-500">Location Name</TableHead>
+                                    <TableHead className="font-black text-[11px] uppercase tracking-wider text-gray-500">Type</TableHead>
+                                    <TableHead className="font-black text-[11px] uppercase tracking-wider text-gray-500">City</TableHead>
+                                    <TableHead className="font-black text-[11px] uppercase tracking-wider text-gray-500">Contact</TableHead>
+                                    <TableHead className="font-black text-[11px] uppercase tracking-wider text-gray-500 text-right">Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {locations.length > 0 ? locations.map((loc) => (
+                                    <TableRow key={loc.id} className="hover:bg-blue-50/30 transition-colors border-b border-gray-50">
+                                        <TableCell>
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-7 h-7 rounded-lg bg-[#162a5b]/10 flex items-center justify-center flex-shrink-0">
+                                                    <Building2 className="size-3.5 text-[#162a5b]" />
+                                                </div>
+                                                <span className="font-bold text-[#162a5b]">{loc.location_legal_name}</span>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wide ${
+                                                loc.location_type === 'HQ'
+                                                    ? 'bg-purple-100 text-purple-700 border border-purple-200'
+                                                    : 'bg-blue-100 text-blue-700 border border-blue-200'
+                                            }`}>
+                                                {loc.location_type || '—'}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell className="text-gray-600 font-medium">{loc.city || '—'}</TableCell>
+                                        <TableCell>
+                                            <div className="flex flex-col gap-0.5">
+                                                <span className="text-sm text-gray-700 flex items-center gap-1"><Phone className="size-3 text-gray-400" />{loc.contact_number || '—'}</span>
+                                                <span className="text-xs text-gray-400 flex items-center gap-1"><Mail className="size-3" />{loc.email || '—'}</span>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <div className="flex justify-end gap-1">
+                                                <Button size="sm" variant="ghost" onClick={() => handleEdit(loc)} className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600">
+                                                    <Pencil className="size-3.5" />
+                                                </Button>
+                                                <Button size="sm" variant="ghost" onClick={() => handleDelete(loc.id)} className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-500">
+                                                    <Trash2 className="size-3.5" />
+                                                </Button>
+                                            </div>
+                                        </TableCell>
                                     </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {locations.length > 0 ? locations.map((loc) => (
-                                        <TableRow key={loc.id} className="hover:bg-gray-50/50">
-                                            <TableCell className="font-medium text-[#162a5b]">{loc.location_legal_name}</TableCell>
-                                            <TableCell className="text-gray-600">{loc.city || 'N/A'}</TableCell>
-                                            <TableCell className="text-gray-600">
-                                                <div>{loc.contact_number || 'N/A'}</div>
-                                                <div className="text-xs text-gray-400">{loc.email}</div>
-                                            </TableCell>
-                                            <TableCell className="text-right space-x-2">
-                                                <Button size="icon" variant="ghost" onClick={() => handleEdit(loc)}>
-                                                    <Pencil className="size-4 text-blue-500" />
+                                )) : (
+                                    <TableRow>
+                                        <TableCell colSpan={5} className="h-40 text-center">
+                                            <div className="flex flex-col items-center gap-3 text-gray-400">
+                                                <MapPin className="size-10 opacity-20" />
+                                                <p className="font-medium">No locations yet</p>
+                                                <Button onClick={handleCreateNew} variant="outline" size="sm" className="gap-1">
+                                                    <PlusCircle className="size-3.5" /> Add Location
                                                 </Button>
-                                                <Button size="icon" variant="ghost" className="text-red-500 hover:text-red-600" onClick={() => handleDelete(loc.id)}>
-                                                    <Trash2 className="size-4" />
-                                                </Button>
-                                            </TableCell>
-                                        </TableRow>
-                                    )) : (
-                                        <TableRow>
-                                            <TableCell colSpan={4} className="h-32 text-center text-gray-500">
-                                                No locations found. Click "Add Location" to create one.
-                                            </TableCell>
-                                        </TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </CardContent>
-                    </Card>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
                 </div>
             </AppLayout>
         );
     }
 
-    // View: Form
-    const switches = [
-        { key: 'specify_reason_for_order_cancellation', label: 'Specify Reason For Order Cancellation?' },
-        { key: 'specify_reason_for_item_cancellation', label: 'Specify Reason For Item Cancellation?' },
-        { key: 'sms_for_daily_sales_summary', label: 'SMS For Daily Sales Summary?' },
-        { key: 'employee_productivity_monitoring', label: 'Employee Productivity Monitoring?' },
-        { key: 'test_mode', label: 'Test Mode' },
-        { key: 'print_without_settlement', label: 'Print Without Settlement ?' },
-        { key: 'show_delivery_charge_on_billing', label: 'Show delivery charge on billing screen ?' },
-        { key: 'is_print_on_dispatch', label: 'Is Print On Dispatch ?' },
-        { key: 'strict_permission_email_purchase_order', label: 'Strict Permission To E-Mail Purchase Order ?' },
-        { key: 'display_location_on_dashboard', label: 'Do You Want To Display This Location On Dashboard ?' },
-        { key: 'allow_order_modification_after_bill_print', label: 'Allow Order Modification After Bill Print ?' },
-        { key: 'enable_bank_deposit', label: 'Enable Bank Deposit ?' },
-        { key: 'allow_negative_sale', label: 'Allow negative sale ?' },
-        { key: 'allow_email_notification_on_stock_transfer', label: 'Allow Email Notification On Stock Transfer ?' },
-        { key: 'enable_kds', label: 'Enable KDS ?' },
-        { key: 'print_item_wise_kot', label: 'Print Item Wise KOT ?' },
-        { key: 'enable_zomato_swiggy_integration', label: 'Enable Zomato/Swiggy Integration' },
-        { key: 'enable_otp_verification_for_order_discount', label: 'Enable OTP Verification For Order Discount?' },
-        { key: 'print_shift_report', label: 'Print Shift Report?' },
-        { key: 'combine_kot_print_on_save_order', label: 'Combine KOT Print On Save Order?' },
-    ];
-
-    const allowedOrderOptions = ['Dine In', 'Take Away', 'Home Delivery', 'Zomato', 'Swiggy'];
-    const allowedPaymentOptions = ['Cash', 'Wallet', 'Card Payment', 'Paytm', 'PhonePe', 'Google Pay', 'Amazon Pay', 'Bank Transfer', 'Account', 'Free Of Cost', 'Zomato', 'Swiggy', 'Uber Eats', 'Cashfree', 'BHIM UPI', 'Online Paid', 'Razorpay', 'Tyne', 'Stripe', 'ANZ Worldline', 'Credit Card'];
-
+    // ─── FORM VIEW ────────────────────────────────────────────
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={isEditing ? 'Edit Location' : 'Add Location'} />
-            <div className="flex flex-col p-6 max-w-7xl mx-auto space-y-6">
-                
-                {/* Header Navbar */}
-                <div className="flex items-center justify-between pb-4 border-b border-gray-100">
-                    <h1 className="text-xl font-bold tracking-tight text-[#162a5b] flex items-center gap-2">
-                        <MapPin className="size-5" />
-                        {isEditing ? 'Edit Location' : 'New Location'}
-                    </h1>
-                    <div className="flex gap-3">
-                        <Button variant="outline" type="button" onClick={() => setViewMode('list')} className="text-gray-500 border-gray-200">
-                            <X className="w-4 h-4 mr-1"/> Cancel
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20">
+
+                {/* Sticky top bar */}
+                <div className="sticky top-0 z-20 bg-white/90 backdrop-blur border-b border-gray-100 shadow-sm px-6 py-3 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="p-1.5 rounded-lg bg-[#162a5b]">
+                            <MapPin className="size-4 text-white" />
+                        </div>
+                        <div>
+                            <h1 className="text-base font-black text-[#162a5b]">{isEditing ? 'Edit Location' : 'New Location'}</h1>
+                            {data.location_legal_name && (
+                                <p className="text-[11px] text-gray-400">{data.location_legal_name}</p>
+                            )}
+                        </div>
+                    </div>
+                    <div className="flex gap-2">
+                        <Button variant="outline" type="button" onClick={() => setViewMode('list')} className="h-9 text-gray-500 border-gray-200 hover:border-gray-300">
+                            <X className="w-4 h-4 mr-1.5" /> Cancel
                         </Button>
-                        <Button type="button" onClick={handleSubmit} disabled={processing} className="bg-[#162a5b] hover:bg-[#162a5b]/90 text-white min-w-[120px]">
-                            {processing ? "Saving..." : <><Save className="w-4 h-4 mr-2"/> Save Location</>}
+                        <Button type="button" onClick={handleSubmit} disabled={processing} className="h-9 bg-[#162a5b] hover:bg-[#1e3a7b] text-white px-6 font-bold shadow-md">
+                            {processing ? (
+                                <span className="flex items-center gap-2"><span className="animate-spin size-3.5 border-2 border-white/30 border-t-white rounded-full" />Saving...</span>
+                            ) : (
+                                <><Save className="w-4 h-4 mr-1.5" /> Save Location</>
+                            )}
                         </Button>
                     </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-6 pb-20">
-                    {/* SECTION 1: Location Definition */}
-                    <Card className="border-gray-100 shadow-sm">
-                        <CardHeader className="bg-gray-50/50 border-b border-gray-100 py-3">
-                            <CardTitle className="text-sm font-semibold text-gray-800">1. Location Definition</CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-6 grid md:grid-cols-4 gap-6">
-                            <div className="space-y-1.5">
-                                <Label>Location Type</Label>
+                <form onSubmit={handleSubmit} className="max-w-5xl mx-auto px-6 py-8 space-y-6 pb-24">
+
+                    {/* ── Section 1: Location Identity ── */}
+                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div className="px-6 pt-6 pb-2">
+                            <SectionHeading icon={Building2} title="Location Identity" subtitle="Basic identification for this location record" />
+                        </div>
+                        <div className="px-6 pb-6 grid md:grid-cols-3 gap-5">
+                            <Field label="Location Type" required error={err('location_type')}>
                                 <Select value={data.location_type} onValueChange={v => setData('location_type', v)}>
-                                    <SelectTrigger><SelectValue placeholder="--Please Select--"/></SelectTrigger>
+                                    <SelectTrigger className={`${err('location_type') ? 'border-red-400 ring-1 ring-red-300' : 'border-gray-200'} bg-gray-50 focus:bg-white`}>
+                                        <SelectValue placeholder="-- Select Type --" />
+                                    </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="B2B">B2B</SelectItem>
-                                        <SelectItem value="Customer">Customer</SelectItem>
+                                        <SelectItem value="Customer">
+                                            <span className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-blue-500" />Customer</span>
+                                        </SelectItem>
+                                        <SelectItem value="HQ">
+                                            <span className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-purple-500" />HQ</span>
+                                        </SelectItem>
                                     </SelectContent>
                                 </Select>
-                            </div>
-                            <div className="space-y-1.5">
-                                <Label>Franchise Type</Label>
-                                <Select value={data.franchise_type} onValueChange={v => setData('franchise_type', v)}>
-                                    <SelectTrigger><SelectValue placeholder="--Please Select--"/></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="FOFO">FOFO</SelectItem>
-                                        <SelectItem value="FOCO">FOCO</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-1.5">
-                                <Label className="text-[#162a5b]">Location (Legal Name) *</Label>
-                                <Input value={data.location_legal_name} onChange={e => setData('location_legal_name', e.target.value)} placeholder="Enter Location Legal Name" className="border-blue-100 focus-visible:ring-blue-500" />
-                                {errors.location_legal_name && <p className="text-xs text-red-500">{errors.location_legal_name}</p>}
-                            </div>
-                            <div className="space-y-1.5">
-                                <Label>Short Name</Label>
-                                <Input value={data.short_name} onChange={e => setData('short_name', e.target.value)} placeholder="Enter Short Name" />
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* SECTION 2: Contact Information */}
-                    <Card className="border-gray-100 shadow-sm">
-                        <CardHeader className="bg-gray-50/50 border-b border-gray-100 py-3">
-                            <CardTitle className="text-sm font-semibold text-gray-800 flex items-center gap-2"><User className="size-4"/> Contact Information</CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-6 grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            <div className="space-y-1.5"><Label>Contact Person Name</Label><Input value={data.contact_person_name} onChange={e=>setData('contact_person_name', e.target.value)} placeholder="Enter Contact Person Name" /></div>
-                            <div className="space-y-1.5"><Label>Contact Number</Label><Input value={data.contact_number} onChange={e=>setData('contact_number', e.target.value)} placeholder="Enter Contact Number" /></div>
-                            <div className="space-y-1.5"><Label>Email</Label><Input type="email" value={data.email} onChange={e=>setData('email', e.target.value)} placeholder="Enter Email" /></div>
-                            <div className="space-y-1.5">
-                                <Label>Time Zone</Label>
-                                <Select value={data.time_zone} onValueChange={v => setData('time_zone', v)}>
-                                    <SelectTrigger><SelectValue placeholder="--Please Select--"/></SelectTrigger>
-                                    <SelectContent><SelectItem value="Asia/Kolkata">Asia/Kolkata (IST)</SelectItem></SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-1.5">
-                                <Label>Country</Label>
-                                <Select value={data.country} onValueChange={v => setData('country', v)}>
-                                    <SelectTrigger><SelectValue placeholder="--Please Select--"/></SelectTrigger>
-                                    <SelectContent><SelectItem value="India">India</SelectItem></SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-1.5">
-                                <Label>State</Label>
-                                <Select value={data.state} onValueChange={v => setData('state', v)}>
-                                    <SelectTrigger><SelectValue placeholder="--Please Select--"/></SelectTrigger>
-                                    <SelectContent><SelectItem value="Gujarat">Gujarat</SelectItem><SelectItem value="Maharashtra">Maharashtra</SelectItem></SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-1.5">
-                                <Label>City</Label>
-                                <Select value={data.city} onValueChange={v => setData('city', v)}>
-                                    <SelectTrigger><SelectValue placeholder="--Please Select--"/></SelectTrigger>
-                                    <SelectContent><SelectItem value="Ahmedabad">Ahmedabad</SelectItem><SelectItem value="Surat">Surat</SelectItem></SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-1.5"><Label>Pincode</Label><Input value={data.pincode} onChange={e=>setData('pincode', e.target.value)} placeholder="Enter Pincode" /></div>
-                            <div className="space-y-1.5 lg:col-span-1"><Label>Address</Label><Input value={data.address} onChange={e=>setData('address', e.target.value)} placeholder="Enter Location Address" /></div>
-                        </CardContent>
-                    </Card>
-
-                    {/* SECTION 3: Taxation Information */}
-                    <Card className="border-gray-100 shadow-sm">
-                        <CardHeader className="bg-gray-50/50 border-b border-gray-100 py-3">
-                            <CardTitle className="text-sm font-semibold text-gray-800 flex items-center gap-2"><FileText className="size-4"/> Taxation Information</CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-6 grid md:grid-cols-2 lg:grid-cols-6 gap-6">
-                            <div className="space-y-1.5 lg:col-span-3"><Label>GST No</Label><Input value={data.gst_no} onChange={e=>setData('gst_no', e.target.value)} placeholder="ENTER GST NUMBER" /></div>
-                            <div className="space-y-1.5 lg:col-span-3"><Label>PAN No</Label><Input value={data.pan_no} onChange={e=>setData('pan_no', e.target.value)} placeholder="Enter PAN" /></div>
-                            <div className="space-y-1.5 lg:col-span-3"><Label>CST No</Label><Input value={data.cst_no} onChange={e=>setData('cst_no', e.target.value)} placeholder="Enter CST Number" /></div>
-                            <div className="space-y-1.5 lg:col-span-3"><Label>Service Tax No</Label><Input value={data.service_tax_no} onChange={e=>setData('service_tax_no', e.target.value)} placeholder="Enter Service Tax Number" /></div>
-                            <div className="space-y-1.5 lg:col-span-3"><Label>TIN No</Label><Input value={data.tin_no} onChange={e=>setData('tin_no', e.target.value)} placeholder="Enter TIN No" /></div>
-                            <div className="space-y-1.5 lg:col-span-3"><Label>VAT No</Label><Input value={data.vat_no} onChange={e=>setData('vat_no', e.target.value)} placeholder="Enter Vat Number" /></div>
-                            <div className="space-y-1.5 lg:col-span-2"><Label>PF No</Label><Input value={data.pf_no} onChange={e=>setData('pf_no', e.target.value)} placeholder="Enter PF Number" /></div>
-                            <div className="space-y-1.5 lg:col-span-2"><Label>Royalty (%)</Label><Input type="number" step="0.01" value={data.royalty_percent} onChange={e=>setData('royalty_percent', e.target.value)} placeholder="Enter Royalty Percentage" /></div>
-                            <div className="space-y-1.5 lg:col-span-2">
-                                <Label>Royalty Frequency</Label>
-                                <Select value={data.royalty_frequency} onValueChange={v => setData('royalty_frequency', v)}>
-                                    <SelectTrigger><SelectValue placeholder="--Please Select--"/></SelectTrigger>
-                                    <SelectContent><SelectItem value="Monthly">Monthly</SelectItem><SelectItem value="Yearly">Yearly</SelectItem></SelectContent>
-                                </Select>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* SECTION 4: Configuration */}
-                    <Card className="border-[#162a5b]/20 shadow-sm border-t-2 border-t-[#162a5b]">
-                        <CardHeader className="bg-gray-50/50 border-b border-gray-100 py-3">
-                            <CardTitle className="text-sm font-semibold text-[#162a5b] flex items-center gap-2"><Settings className="size-4"/> Core Configuration</CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-10">
-                            
-                            {/* Left Config Column */}
-                            <div className="space-y-6">
-                                {/* Order Settings */}
-                                <div className="space-y-3">
-                                    <Label className="text-[#162a5b] font-semibold">Allow Order Types</Label>
-                                    <div className="flex flex-wrap gap-2">
-                                        {allowedOrderOptions.map(opt => (
-                                            <div 
-                                                key={opt} 
-                                                onClick={() => toggleArrayItem('allow_order_types', opt)}
-                                                className={`px-3 py-1 text-xs font-medium rounded-full cursor-pointer transition-colors border ${data.allow_order_types.includes(opt) ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'}`}
-                                            >
-                                                {opt} {data.allow_order_types.includes(opt) && '✓'}
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <div className="pt-2">
-                                        <Label className="text-xs">Default Order Type</Label>
-                                        <Select value={data.default_order_type} onValueChange={v => setData('default_order_type', v)}>
-                                            <SelectTrigger className="h-8 mt-1"><SelectValue placeholder="Take Away"/></SelectTrigger>
-                                            <SelectContent>{allowedOrderOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
-                                        </Select>
-                                    </div>
-                                </div>
-                                <Separator />
-                                {/* System Params */}
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-1.5"><Label>Start Bill No</Label><Input value={data.start_bill_no} onChange={e=>setData('start_bill_no', e.target.value)} placeholder="0" /></div>
-                                    <div className="space-y-1.5">
-                                        <Label>Round Off Option</Label>
-                                        <Select value={data.round_off_option} onValueChange={v => setData('round_off_option', v)}>
-                                            <SelectTrigger><SelectValue placeholder="Round Normal"/></SelectTrigger>
-                                            <SelectContent><SelectItem value="Round Normal">Round Normal</SelectItem><SelectItem value="Ceil">Ceil</SelectItem></SelectContent>
-                                        </Select>
-                                    </div>
-                                    <div className="space-y-1.5"><Label>Time Duration To Edit Order (Min)</Label><Input type="number" value={data.time_duration_to_edit_order} onChange={e=>setData('time_duration_to_edit_order', e.target.value)} placeholder="e.g. 15" /></div>
-                                    <div className="space-y-1.5">
-                                        <Label>PO Number Format</Label>
-                                        <Select value={data.po_number_format} onValueChange={v => setData('po_number_format', v)}>
-                                            <SelectTrigger><SelectValue placeholder="--Please Select--"/></SelectTrigger>
-                                            <SelectContent><SelectItem value="Standard">Standard</SelectItem><SelectItem value="Custom">Custom</SelectItem></SelectContent>
-                                        </Select>
-                                    </div>
-                                </div>
-                                <div className="space-y-1.5"><Label>FSSAI Number</Label><Input value={data.fssai_number} onChange={e=>setData('fssai_number', e.target.value)} placeholder="Enter FSSAI Number" /></div>
-                                
-                                <div className="space-y-3 pt-3">
-                                    <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Business Timings</Label>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-1.5"><Label>Opening Time</Label><Input type="time" value={data.opening_time} onChange={e=>setData('opening_time', e.target.value)} /></div>
-                                        <div className="space-y-1.5"><Label>Closing Time</Label><Input type="time" value={data.closing_time} onChange={e=>setData('closing_time', e.target.value)} /></div>
-                                        <div className="space-y-1.5 col-span-2"><Label>End Day Should Process Only After</Label><Input type="time" value={data.end_day_process_time} onChange={e=>setData('end_day_process_time', e.target.value)} /></div>
-                                    </div>
-                                </div>
-                                
-                                <div className="space-y-1.5"><Label>Business Id</Label><Input value={data.business_id} onChange={e=>setData('business_id', e.target.value)} placeholder="Please Define Business Id" /></div>
-                                
-                                <div className="flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-100">
-                                    <Label>Custom Sales Invoice Series</Label>
-                                    <Switch checked={data.custom_sales_invoice_series} onCheckedChange={(c) => setData('custom_sales_invoice_series', c)} />
-                                </div>
-                            </div>
-                            
-                            {/* Right Config Column */}
-                            <div className="space-y-6">
-                                {/* Payment Settings */}
-                                <div className="space-y-3">
-                                    <Label className="text-[#162a5b] font-semibold">Allow Payment Types</Label>
-                                    <div className="flex flex-wrap gap-2">
-                                        {allowedPaymentOptions.map(opt => (
-                                            <div 
-                                                key={opt} 
-                                                onClick={() => toggleArrayItem('allow_payment_types', opt)}
-                                                className={`px-3 py-1 text-xs font-medium rounded-full cursor-pointer transition-colors border ${data.allow_payment_types.includes(opt) ? 'bg-green-50 border-green-200 text-green-700' : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'}`}
-                                            >
-                                                {opt} {data.allow_payment_types.includes(opt) && '✓'}
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <div className="pt-2">
-                                        <Label className="text-xs">Default Payment Type</Label>
-                                        <Select value={data.default_payment_type} onValueChange={v => setData('default_payment_type', v)}>
-                                            <SelectTrigger className="h-8 mt-1"><SelectValue placeholder="--Please Select--"/></SelectTrigger>
-                                            <SelectContent>{allowedPaymentOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
-                                        </Select>
-                                    </div>
-                                </div>
-                                <Separator />
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-1.5"><Label>Default Delivery Charge</Label><Input type="number" step="0.01" value={data.default_delivery_charge} onChange={e=>setData('default_delivery_charge', e.target.value)} placeholder="0.00" /></div>
-                                    <div className="space-y-1.5"><Label>Order Cancellation Duration (Min)</Label><Input type="number" value={data.order_cancellation_duration} onChange={e=>setData('order_cancellation_duration', e.target.value)} placeholder="e.g. 5" /></div>
-                                    <div className="space-y-1.5">
-                                        <Label>Token Refreshment</Label>
-                                        <Select value={data.token_refreshment} onValueChange={v => setData('token_refreshment', v)}>
-                                            <SelectTrigger><SelectValue placeholder="Daily"/></SelectTrigger>
-                                            <SelectContent><SelectItem value="Daily">Daily</SelectItem><SelectItem value="Never">Never</SelectItem></SelectContent>
-                                        </Select>
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <Label>Common Preferences</Label>
-                                        <Select value={data.common_preferences} onValueChange={v => setData('common_preferences', v)}>
-                                            <SelectTrigger><SelectValue placeholder="--Please Select--"/></SelectTrigger>
-                                            <SelectContent><SelectItem value="Default">Default</SelectItem></SelectContent>
-                                        </Select>
-                                    </div>
-                                </div>
-
-                                {/* Mega Switch List */}
-                                <div className="pt-4 space-y-3">
-                                    <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">Advanced Rules & Flags</Label>
-                                    <div className="border border-gray-100 rounded-xl divide-y divide-gray-50 bg-[#fafafa]">
-                                        {switches.map((sw) => (
-                                            <div key={sw.key} className="flex items-center justify-between py-2 px-3 hover:bg-white tranasition-colors">
-                                                <Label className="text-[11px] font-medium text-gray-700 cursor-pointer">{sw.label}</Label>
-                                                {/* @ts-ignore dynamic key access */}
-                                                <Switch checked={data[sw.key] as boolean} onCheckedChange={(c) => setData(sw.key as any, c)} />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-
-                        </CardContent>
-                    </Card>
-
-                    {/* SECTION 5: Extenders (Supplier, Warehouse, Petty Cash, Routing) */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-6">
-                        
-                        <Card className="border-gray-100 shadow-sm">
-                            <CardHeader className="bg-gray-50/50 border-b border-gray-100 py-3"><CardTitle className="text-sm font-semibold text-gray-800">Supplier Mapping</CardTitle></CardHeader>
-                            <CardContent className="p-4 space-y-1.5">
-                                <Label>Supplier</Label>
-                                <Select value={data.supplier_id} onValueChange={v => setData('supplier_id', v)}>
-                                    <SelectTrigger><SelectValue placeholder="None selected"/></SelectTrigger>
-                                    <SelectContent><SelectItem value="1">Supplier Alpha</SelectItem></SelectContent>
-                                </Select>
-                            </CardContent>
-                        </Card>
-
-                        <Card className="border-gray-100 shadow-sm">
-                            <CardHeader className="bg-gray-50/50 border-b border-gray-100 py-3"><CardTitle className="text-sm font-semibold text-gray-800">Ware House</CardTitle></CardHeader>
-                            <CardContent className="p-4 space-y-1.5">
-                                <Label>Default Ware House Name</Label>
-                                <Input value={data.default_warehouse_name} onChange={e=>setData('default_warehouse_name', e.target.value)} placeholder="Main Warehouse" />
-                            </CardContent>
-                        </Card>
-
-                        <Card className="border-red-100 bg-red-50/30 shadow-sm">
-                            <CardHeader className="bg-red-50/80 border-b border-red-100 py-3"><CardTitle className="text-sm font-semibold text-red-900">Petty Cash</CardTitle></CardHeader>
-                            <CardContent className="p-4 space-y-3">
-                                <div className="flex items-center gap-3">
-                                    <Switch checked={data.enable_petty_cash} onCheckedChange={(c) => setData('enable_petty_cash', c)} />
-                                    <Label className="font-bold">Enable Petty Cash</Label>
-                                </div>
-                                <p className="text-[10px] font-semibold text-red-600">Note: If You Enable Petty Cash Then Your Expenses Will Always Be Deducted From Petty Cash.</p>
-                            </CardContent>
-                        </Card>
-                        
-                        <Card className="border-gray-100 shadow-sm md:col-span-3 xl:col-span-1">
-                            <CardHeader className="bg-gray-50/50 border-b border-gray-100 py-3"><CardTitle className="text-sm font-semibold text-gray-800 flex gap-2"><Navigation className="size-4"/> Routing</CardTitle></CardHeader>
-                            <CardContent className="p-4 space-y-4">
-                                <div className="space-y-1.5">
-                                    <Label>Route</Label>
-                                    <Select value={data.route} onValueChange={v => setData('route', v)}>
-                                        <SelectTrigger><SelectValue placeholder="--Please Select--"/></SelectTrigger>
-                                        <SelectContent><SelectItem value="Route_A">Route A</SelectItem></SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="space-y-1.5"><Label>Latitude</Label><Input type="number" step="0.0000001" value={data.latitude} onChange={e=>setData('latitude', e.target.value)} placeholder="0.000" /></div>
-                                    <div className="space-y-1.5"><Label>Longitude</Label><Input type="number" step="0.0000001" value={data.longitude} onChange={e=>setData('longitude', e.target.value)} placeholder="0.000" /></div>
-                                </div>
-                            </CardContent>
-                        </Card>
-
+                            </Field>
+                            <Field label="Location Legal Name" required error={err('location_legal_name')}>
+                                <Input
+                                    value={data.location_legal_name}
+                                    onChange={e => setData('location_legal_name', e.target.value)}
+                                    placeholder="Enter official legal name"
+                                    className={`${err('location_legal_name') ? 'border-red-400 ring-1 ring-red-300' : 'border-gray-200'} bg-gray-50 focus:bg-white`}
+                                />
+                            </Field>
+                            <Field label="Short Name / Code">
+                                <Input value={data.short_name} onChange={e => setData('short_name', e.target.value)} placeholder="e.g. LOC-001" className="border-gray-200 bg-gray-50 focus:bg-white" />
+                            </Field>
+                        </div>
                     </div>
+
+                    {/* ── Section 2: Contact ── */}
+                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div className="px-6 pt-6 pb-2">
+                            <SectionHeading icon={Phone} title="Contact Information" subtitle="Primary contact details for this location" />
+                        </div>
+                        <div className="px-6 pb-6 grid md:grid-cols-3 gap-5">
+                            <Field label="Contact Person">
+                                <Input value={data.contact_person_name} onChange={e => setData('contact_person_name', e.target.value)} placeholder="Full name" className="border-gray-200 bg-gray-50 focus:bg-white" />
+                            </Field>
+                            <Field label="Contact Number" required error={err('contact_number')}>
+                                <Input value={data.contact_number} onChange={e => setData('contact_number', e.target.value)} placeholder="+91 98765 43210" className={`${err('contact_number') ? 'border-red-400' : 'border-gray-200'} bg-gray-50 focus:bg-white`} />
+                            </Field>
+                            <Field label="Email Address">
+                                <Input type="email" value={data.email} onChange={e => setData('email', e.target.value)} placeholder="email@company.com" className="border-gray-200 bg-gray-50 focus:bg-white" />
+                            </Field>
+                            <Field label="State" required error={err('state')}>
+                                <Select value={data.state} onValueChange={v => setData('state', v)}>
+                                    <SelectTrigger className={`${err('state') ? 'border-red-400' : 'border-gray-200'} bg-gray-50 focus:bg-white`}>
+                                        <SelectValue placeholder="-- Select State --" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {statesOfIndia.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </Field>
+                            <Field label="City" required error={err('city')}>
+                                <Input value={data.city} onChange={e => setData('city', e.target.value)} placeholder="City name" className={`${err('city') ? 'border-red-400' : 'border-gray-200'} bg-gray-50 focus:bg-white`} />
+                            </Field>
+                            <Field label="Pincode">
+                                <Input value={data.pincode} onChange={e => setData('pincode', e.target.value)} placeholder="6-digit pincode" className="border-gray-200 bg-gray-50 focus:bg-white" />
+                            </Field>
+                            <div className="md:col-span-3">
+                                <Field label="Full Address">
+                                    <Input value={data.address} onChange={e => setData('address', e.target.value)} placeholder="Door no, Street, Area, Landmark" className="border-gray-200 bg-gray-50 focus:bg-white" />
+                                </Field>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* ── Section 3: Taxation ── */}
+                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div className="px-6 pt-6 pb-2">
+                            <SectionHeading icon={FileText} title="Taxation Information" subtitle="Tax and registration numbers for compliance" />
+                        </div>
+                        <div className="px-6 pb-6 grid md:grid-cols-4 gap-5">
+                            {[
+                                { label: 'GST No', key: 'gst_no', placeholder: '22AAAAA0000A1Z5' },
+                                { label: 'PAN No', key: 'pan_no', placeholder: 'ABCDE1234F' },
+                                { label: 'CST No', key: 'cst_no', placeholder: 'CST Number' },
+                                { label: 'Service Tax No', key: 'service_tax_no', placeholder: 'Service Tax' },
+                                { label: 'TIN No', key: 'tin_no', placeholder: 'TIN Number' },
+                                { label: 'VAT No', key: 'vat_no', placeholder: 'VAT Number' },
+                                { label: 'PF No', key: 'pf_no', placeholder: 'PF Number' },
+                                { label: 'FSSAI No', key: 'fssai_number', placeholder: 'FSSAI License' },
+                            ].map(f => (
+                                <Field key={f.key} label={f.label}>
+                                    <Input
+                                        value={(data as any)[f.key]}
+                                        onChange={e => setData(f.key as any, e.target.value)}
+                                        placeholder={f.placeholder}
+                                        className="border-gray-200 bg-gray-50 focus:bg-white font-mono text-sm"
+                                    />
+                                </Field>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* ── Section 4: Auto-setup info banner ── */}
+                    {data.location_legal_name && (
+                        <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-4 flex items-start gap-3">
+                            <div className="p-1.5 rounded-lg bg-blue-100 mt-0.5"><Lock className="size-3.5 text-blue-600" /></div>
+                            <div>
+                                <p className="text-sm font-bold text-blue-800">Auto-setup on Save</p>
+                                <p className="text-[12px] text-blue-600 mt-0.5">
+                                    A warehouse named <strong>"{data.location_legal_name}"</strong> and a supplier entry will be automatically created when you save this location.
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ── Section 5: Configuration — conditional ── */}
+                    {data.location_type && (
+                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                            <div className="px-6 pt-6 pb-2">
+                                <SectionHeading
+                                    icon={Settings2}
+                                    title={`${data.location_type} Configuration`}
+                                    subtitle={isCustomer ? 'Invoice email settings for this customer' : 'Operational settings for this HQ location'}
+                                />
+                            </div>
+                            <div className="px-6 pb-6">
+
+                                {/* CUSTOMER */}
+                                {isCustomer && (
+                                    <div className="max-w-xl space-y-5">
+                                        <div className="flex items-center justify-between p-4 rounded-xl border border-gray-100 bg-gray-50">
+                                            <div>
+                                                <p className="text-sm font-bold text-gray-800">Email Sales Invoice to Customer</p>
+                                                <p className="text-[11px] text-gray-400 mt-0.5">Auto-send invoice PDF by email when a sales order is created.</p>
+                                            </div>
+                                            <Switch checked={data.email_sales_order} onCheckedChange={c => setData('email_sales_order', c)} />
+                                        </div>
+
+                                        <div className="space-y-3">
+                                            <Label className="text-[12px] font-black text-gray-600 uppercase tracking-wide">CC Email Addresses</Label>
+                                            <p className="text-[11px] text-gray-400">Add multiple recipients to be CC'd on every sales invoice for this customer.</p>
+                                            <div className="flex gap-2">
+                                                <Input
+                                                    type="email"
+                                                    value={ccEmailInput}
+                                                    onChange={e => setCcEmailInput(e.target.value)}
+                                                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addCcEmail(); } }}
+                                                    placeholder="e.g. manager@company.com"
+                                                    className="flex-1 border-gray-200 bg-gray-50 focus:bg-white"
+                                                />
+                                                <Button type="button" onClick={addCcEmail} className="bg-[#162a5b] hover:bg-[#1e3a7b] text-white gap-1 px-4">
+                                                    <Plus className="size-3.5" /> Add
+                                                </Button>
+                                            </div>
+                                            {ccEmails.length > 0 && (
+                                                <div className="flex flex-wrap gap-2 pt-1">
+                                                    {ccEmails.map(email => (
+                                                        <span key={email} className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-full px-3 py-1 text-xs font-semibold">
+                                                            <Mail className="size-3" />{email}
+                                                            <button type="button" onClick={() => removeCcEmail(email)} className="hover:text-red-500 transition-colors ml-0.5">
+                                                                <X className="size-3" />
+                                                            </button>
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* HQ */}
+                                {isHQ && (
+                                    <div className="grid md:grid-cols-2 gap-8">
+                                        <div className="space-y-5">
+                                            <Field label="Supplier Mapping">
+                                                <Select value={data.supplier_id} onValueChange={v => setData('supplier_id', v)}>
+                                                    <SelectTrigger className="border-gray-200 bg-gray-50 focus:bg-white"><SelectValue placeholder="-- None --" /></SelectTrigger>
+                                                    <SelectContent>
+                                                        {suppliers.map(s => <SelectItem key={s.id} value={s.id.toString()}>{s.supplier_name}</SelectItem>)}
+                                                    </SelectContent>
+                                                </Select>
+                                            </Field>
+
+                                            <div className="space-y-3 p-4 rounded-xl bg-gray-50 border border-gray-100">
+                                                <Label className="text-[12px] font-black text-gray-600 uppercase tracking-wide flex items-center gap-1.5">
+                                                    <Navigation className="size-3.5 text-[#162a5b]" /> Route & GPS Coordinates
+                                                </Label>
+                                                <Input value={data.route} onChange={e => setData('route', e.target.value)} placeholder="Route name" className="border-gray-200 bg-white" />
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div className="space-y-1"><Label className="text-[11px] text-gray-500">Latitude</Label><Input type="number" step="0.0000001" value={data.latitude} onChange={e => setData('latitude', e.target.value)} placeholder="0.000000" className="border-gray-200 bg-white font-mono" /></div>
+                                                    <div className="space-y-1"><Label className="text-[11px] text-gray-500">Longitude</Label><Input type="number" step="0.0000001" value={data.longitude} onChange={e => setData('longitude', e.target.value)} placeholder="0.000000" className="border-gray-200 bg-white font-mono" /></div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-5">
+                                            <Field label="PO Approval Notification Email">
+                                                <Input type="email" value={data.email_po_approval} onChange={e => setData('email_po_approval', e.target.value)} placeholder="accounts@company.com" className="border-gray-200 bg-gray-50 focus:bg-white" />
+                                            </Field>
+                                            <Field label="SO Approval Notification Email">
+                                                <Input type="email" value={data.email_so_approval} onChange={e => setData('email_so_approval', e.target.value)} placeholder="sales@company.com" className="border-gray-200 bg-gray-50 focus:bg-white" />
+                                            </Field>
+
+                                            <div className="rounded-xl border border-gray-100 divide-y divide-gray-50 overflow-hidden">
+                                                {[
+                                                    { key: 'strict_permission_email_purchase_order', label: 'Strict Permission — Email Purchase Order', desc: 'Require approval before emailing POs to suppliers.' },
+                                                    { key: 'allow_email_notification_on_stock_transfer', label: 'Email Notification — Stock Transfers', desc: 'Send email on every stock transfer action.' },
+                                                    { key: 'email_sales_order', label: 'Email Sales Order to Customer', desc: 'Auto-email invoice when a sales order is placed.' },
+                                                ].map((sw) => (
+                                                    <div key={sw.key} className="flex items-start justify-between py-3.5 px-4 gap-4 bg-gray-50/40 hover:bg-white transition-colors">
+                                                        <div>
+                                                            <p className="text-[13px] font-semibold text-gray-800">{sw.label}</p>
+                                                            <p className="text-[11px] text-gray-400 mt-0.5">{sw.desc}</p>
+                                                        </div>
+                                                        {/* @ts-ignore */}
+                                                        <Switch checked={data[sw.key] as boolean} onCheckedChange={c => setData(sw.key as any, c)} />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
                 </form>
             </div>
         </AppLayout>
