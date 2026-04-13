@@ -20,8 +20,8 @@ class WarehouseController extends Controller
     public function store(Request $request)
     {
         $request->validate([
+            'name' => 'required|string|max:255|unique:warehouses,name',
             'location_id' => 'required|exists:locations,id',
-            'name' => 'required|string|max:255'
         ]);
         Warehouse::create($request->all());
         return redirect()->back();

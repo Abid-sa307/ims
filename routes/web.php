@@ -103,11 +103,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Inventory Management
     Route::prefix('inventory')->group(function () {
-        Route::resource('item-category', \App\Http\Controllers\ItemCategoryController::class);
-        Route::resource('item-sub-category', \App\Http\Controllers\ItemSubCategoryController::class);
-        Route::resource('item-type', \App\Http\Controllers\ItemTypeController::class);
-        Route::resource('uom-master', \App\Http\Controllers\UomController::class);
-        Route::resource('warehouse-master', \App\Http\Controllers\WarehouseController::class);
+        Route::resource('item-categories', App\Http\Controllers\ItemCategoryController::class);
+        Route::resource('item-sub-categories', App\Http\Controllers\ItemSubCategoryController::class);
+        Route::resource('item-types', App\Http\Controllers\ItemTypeController::class);
+        Route::resource('items', App\Http\Controllers\ItemController::class);
+        
+        // Price List
+        Route::resource('price-lists', App\Http\Controllers\PriceListController::class);
+
+        // Dynamic Options routes
+        Route::get('/api/item-categories', [App\Http\Controllers\ItemCategoryController::class, 'apiIndex']);
         Route::resource('item-supplier-mapping', \App\Http\Controllers\ItemSupplierMappingController::class);
         Route::resource('item-warehouse-mapping', \App\Http\Controllers\ItemWarehouseMappingController::class);
     });

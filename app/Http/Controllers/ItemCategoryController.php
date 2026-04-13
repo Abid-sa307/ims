@@ -17,15 +17,15 @@ class ItemCategoryController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate(['name' => 'required|string|max:255']);
-        ItemCategory::create($request->all());
+        $request->validate(['name' => 'required|string|max:255|unique:item_categories,name']);
+        ItemCategory::create($request->only('name'));
         return redirect()->back();
     }
 
     public function update(Request $request, ItemCategory $itemCategory)
     {
-        $request->validate(['name' => 'required|string|max:255']);
-        $itemCategory->update($request->all());
+        $request->validate(['name' => 'required|string|max:255|unique:item_categories,name,' . $itemCategory->id]);
+        $itemCategory->update($request->only('name'));
         return redirect()->back();
     }
 

@@ -35,16 +35,24 @@ const mainNavItems: NavItem[] = [
                 href: '/master/supplier-master',
             },
             {
-                title: 'Item Category',
-                href: '/inventory/item-category',
+                title: 'Item Categories',
+                href: '/inventory/item-categories',
             },
             {
-                title: 'Item Sub Category',
-                href: '/inventory/item-sub-category',
+                title: 'Item Sub Categories',
+                href: '/inventory/item-sub-categories',
             },
             {
-                title: 'Item Type',
-                href: '/inventory/item-type',
+                title: 'Item Types',
+                href: '/inventory/item-types',
+            },
+            {
+                title: 'Items',
+                href: '/inventory/items',
+            },
+            {
+                title: 'Price Policy',
+                href: '/inventory/price-lists',
             },
             {
                 title: 'UOM Master',

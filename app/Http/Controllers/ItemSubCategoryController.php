@@ -21,7 +21,7 @@ class ItemSubCategoryController extends Controller
     {
         $request->validate([
             'category_id' => 'required|exists:item_categories,id',
-            'name' => 'required|string|max:255'
+            'name' => 'required|string|max:255|unique:item_sub_categories,name'
         ]);
         ItemSubCategory::create($request->all());
         return redirect()->back();
@@ -31,7 +31,7 @@ class ItemSubCategoryController extends Controller
     {
         $request->validate([
             'category_id' => 'required|exists:item_categories,id',
-            'name' => 'required|string|max:255'
+            'name' => 'required|string|max:255|unique:item_sub_categories,name,' . $itemSubCategory->id
         ]);
         $itemSubCategory->update($request->all());
         return redirect()->back();

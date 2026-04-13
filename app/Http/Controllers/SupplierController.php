@@ -24,7 +24,7 @@ class SupplierController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'supplier_name' => 'required|string|max:255',
+            'supplier_name' => 'required|string|max:255|unique:suppliers,supplier_name',
             'country'       => 'required|string',
             'state'         => 'required|string',
             'city'          => 'required|string',
@@ -46,7 +46,7 @@ class SupplierController extends Controller
     {
         $supplier = Supplier::findOrFail($id);
         $request->validate([
-            'supplier_name' => 'required|string|max:255',
+            'supplier_name' => 'required|string|max:255|unique:suppliers,supplier_name,' . $supplier->id,
             'country'       => 'required|string',
             'state'         => 'required|string',
             'city'          => 'required|string',

@@ -21,7 +21,7 @@ class LocationController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'location_legal_name' => 'required|string|max:255',
+            'location_legal_name' => 'required|string|max:255|unique:locations,location_legal_name',
         ]);
 
         // Always use the location name as the warehouse name
@@ -60,7 +60,7 @@ class LocationController extends Controller
     public function update(Request $request, Location $location)
     {
         $request->validate([
-            'location_legal_name' => 'required|string|max:255',
+            'location_legal_name' => 'required|string|max:255|unique:locations,location_legal_name,' . $location->id,
         ]);
 
         $input = $request->all();

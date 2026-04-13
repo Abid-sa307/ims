@@ -17,14 +17,14 @@ class ItemTypeController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate(['name' => 'required|string|max:255']);
+        $request->validate(['name' => 'required|string|max:255|unique:item_types,name']);
         ItemType::create($request->all());
         return redirect()->back();
     }
 
     public function update(Request $request, ItemType $itemType)
     {
-        $request->validate(['name' => 'required|string|max:255']);
+        $request->validate(['name' => 'required|string|max:255|unique:item_types,name,' . $itemType->id]);
         $itemType->update($request->all());
         return redirect()->back();
     }

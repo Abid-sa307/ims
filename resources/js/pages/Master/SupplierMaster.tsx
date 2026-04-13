@@ -37,7 +37,7 @@ interface Supplier {
     reduce_qty_with_packaging_material: boolean;
     enable_credit_limit: boolean;
     dispatch_only_prepaid_orders: boolean;
-    enable_royalty_service: boolean;
+    allow_modify_sales_order: boolean;
 }
 
 interface Location {
@@ -97,7 +97,7 @@ export default function SupplierMaster({ suppliers = [], locations = [] }: Props
         reduce_qty_with_packaging_material: false,
         enable_credit_limit: false,
         dispatch_only_prepaid_orders: false,
-        enable_royalty_service: false,
+        allow_modify_sales_order: false,
         _method: 'POST',
     });
 
@@ -175,7 +175,7 @@ export default function SupplierMaster({ suppliers = [], locations = [] }: Props
             reduce_qty_with_packaging_material: !!supplier.reduce_qty_with_packaging_material,
             enable_credit_limit: !!supplier.enable_credit_limit,
             dispatch_only_prepaid_orders: !!supplier.dispatch_only_prepaid_orders,
-            enable_royalty_service: !!supplier.enable_royalty_service,
+            allow_modify_sales_order: !!supplier.allow_modify_sales_order,
             _method: 'PUT',
         });
         setValidationErrors({});
@@ -419,8 +419,8 @@ export default function SupplierMaster({ suppliers = [], locations = [] }: Props
                                 <Switch checked={data.dispatch_only_prepaid_orders} onCheckedChange={(v) => setData('dispatch_only_prepaid_orders', v)} className="data-[state=checked]:bg-blue-500 border-gray-300" />
                             </div>
                             <div className="flex items-center justify-between gap-4 min-w-[280px]">
-                                <Label className="text-xs text-gray-500 font-medium cursor-pointer">Enable Royalty Service</Label>
-                                <Switch checked={data.enable_royalty_service} onCheckedChange={(v) => setData('enable_royalty_service', v)} className="data-[state=checked]:bg-blue-500 border-gray-300" />
+                                <Label className="text-xs text-gray-500 font-medium cursor-pointer">Allow Modify Sales Order</Label>
+                                <Switch checked={data.allow_modify_sales_order} onCheckedChange={(v) => setData('allow_modify_sales_order', v)} className="data-[state=checked]:bg-blue-500 border-gray-300" />
                             </div>
                         </div>
 

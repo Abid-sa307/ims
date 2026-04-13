@@ -103,8 +103,8 @@ class ItemController extends Controller
     public function update(Request $request, Item $item_master)
     {
         $validated = $request->validate([
-            'item_name' => 'required|string|max:255',
-            'item_category_id' => 'nullable|exists:item_categories,id',
+            'item_name' => 'required|string|max:255|unique:items,item_name,' . $item_master->id,
+            'item_category_id' => 'required|integer|exists:item_categories,id',
             'item_sub_category_id' => 'nullable|exists:item_sub_categories,id',
             'brand_id' => 'nullable|exists:brands,id',
             'item_type_id' => 'nullable|exists:item_types,id',

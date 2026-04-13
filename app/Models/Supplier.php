@@ -13,7 +13,7 @@ class Supplier extends Model
         'contact_number', 'email', 'pincode', 'supplier_code_tally', 'contact_person_name',
         'logo', 'cut_off_from_time', 'cut_off_to_time', 'allow_modify_moq',
         'enable_order_level_tax', 'disable_rounding_off', 'reduce_qty_with_packaging_material',
-        'enable_credit_limit', 'dispatch_only_prepaid_orders', 'enable_royalty_service'
+        'enable_credit_limit', 'dispatch_only_prepaid_orders', 'allow_modify_sales_order'
     ];
     
     protected $casts = [
@@ -23,6 +23,6 @@ class Supplier extends Model
         'reduce_qty_with_packaging_material' => 'boolean',
         'enable_credit_limit' => 'boolean',
         'dispatch_only_prepaid_orders' => 'boolean',
-        'enable_royalty_service' => 'boolean',
+        'allow_modify_sales_order' => 'boolean',
     ];
 }
