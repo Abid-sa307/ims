@@ -17,6 +17,7 @@ interface Supplier {
     city: string | null;
     address: string | null;
     location: string | null;
+    location_id: number | null;
     gst_number: string | null;
     pan: string | null;
     vat_number: string | null;
@@ -39,8 +40,23 @@ interface Supplier {
     enable_royalty_service: boolean;
 }
 
+interface Location {
+    id: number;
+    location_legal_name: string;
+    location_type: string | null;
+}
+
+const statesOfIndia = [
+    'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat',
+    'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala', 'Madhya Pradesh',
+    'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab',
+    'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh',
+    'Uttarakhand', 'West Bengal', 'Delhi', 'Jammu and Kashmir', 'Ladakh',
+];
+
 interface Props {
     suppliers: Supplier[];
+    locations: Location[];
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -48,9 +64,10 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Supplier Master', href: '/master/supplier-master' },
 ];
 
-export default function SupplierMaster({ suppliers = [] }: Props) {
+export default function SupplierMaster({ suppliers = [], locations = [] }: Props) {
     const [showList, setShowList] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
+    const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -60,6 +77,7 @@ export default function SupplierMaster({ suppliers = [] }: Props) {
         city: '',
         address: '',
         location: '',
+        location_id: '' as string | number,
         gst_number: '',
         pan: '',
         vat_number: '',
@@ -80,11 +98,23 @@ export default function SupplierMaster({ suppliers = [] }: Props) {
         enable_credit_limit: false,
         dispatch_only_prepaid_orders: false,
         enable_royalty_service: false,
-        _method: 'POST', // Used for spoofing PUT
+        _method: 'POST',
     });
+
+    const validate = () => {
+        const errs: Record<string, string> = {};
+        if (!data.supplier_name.trim()) errs.supplier_name = 'Supplier Name is required.';
+        if (!data.country) errs.country = 'Country is required.';
+        if (!data.state) errs.state = 'State is required.';
+        if (!data.city) errs.city = 'City is required.';
+        if (!data.contact_number?.trim()) errs.contact_number = 'Contact number is required.';
+        setValidationErrors(errs);
+        return Object.keys(errs).length === 0;
+    };
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
+        if (!validate()) return;
         
         if (editingId) {
             setData('_method', 'PUT');
@@ -97,6 +127,7 @@ export default function SupplierMaster({ suppliers = [] }: Props) {
                 onSuccess: () => {
                     reset();
                     setEditingId(null);
+                    setValidationErrors({});
                     setShowList(true);
                     if (fileInputRef.current) fileInputRef.current.value = '';
                 },
@@ -107,6 +138,7 @@ export default function SupplierMaster({ suppliers = [] }: Props) {
                 forceFormData: true,
                 onSuccess: () => {
                     reset();
+                    setValidationErrors({});
                     setShowList(true);
                     if (fileInputRef.current) fileInputRef.current.value = '';
                 },
@@ -123,6 +155,7 @@ export default function SupplierMaster({ suppliers = [] }: Props) {
             city: supplier.city || '',
             address: supplier.address || '',
             location: supplier.location || '',
+            location_id: supplier.location_id || '',
             gst_number: supplier.gst_number || '',
             pan: supplier.pan || '',
             vat_number: supplier.vat_number || '',
@@ -133,7 +166,7 @@ export default function SupplierMaster({ suppliers = [] }: Props) {
             pincode: supplier.pincode || '',
             supplier_code_tally: supplier.supplier_code_tally || '',
             contact_person_name: supplier.contact_person_name || '',
-            logo: null, // Don't try to load existing file into input
+            logo: null,
             cut_off_from_time: supplier.cut_off_from_time ? supplier.cut_off_from_time.slice(0, 5) : '',
             cut_off_to_time: supplier.cut_off_to_time ? supplier.cut_off_to_time.slice(0, 5) : '',
             allow_modify_moq: !!supplier.allow_modify_moq,
@@ -145,9 +178,12 @@ export default function SupplierMaster({ suppliers = [] }: Props) {
             enable_royalty_service: !!supplier.enable_royalty_service,
             _method: 'PUT',
         });
+        setValidationErrors({});
         if (fileInputRef.current) fileInputRef.current.value = '';
         setShowList(false);
     };
+
+    const err = (field: string) => validationErrors[field] || (errors as any)[field];
 
     const handleDelete = (id: number) => {
         if (confirm('Are you sure you want to delete this supplier?')) {
@@ -183,49 +219,45 @@ export default function SupplierMaster({ suppliers = [] }: Props) {
                         <div className="md:col-span-2 space-y-2">
                             <Label className="text-xs text-gray-600 font-normal">Supplier Name <span className="text-red-500">*</span></Label>
                             <Input 
-                                className="h-8 border-0 border-b border-gray-200 rounded-none px-0 text-sm shadow-none focus-visible:ring-0 placeholder:text-gray-400" 
+                                className={`h-8 border-0 border-b rounded-none px-0 text-sm shadow-none focus-visible:ring-0 placeholder:text-gray-400 ${err('supplier_name') ? 'border-red-400' : 'border-gray-200'}`}
                                 placeholder="Please Enter Supplier Name" 
                                 value={data.supplier_name}
                                 onChange={(e) => setData('supplier_name', e.target.value)}
-                                required
                             />
-                            {errors.supplier_name && <p className="text-red-500 text-xs mt-1">{errors.supplier_name}</p>}
+                            {err('supplier_name') && <p className="text-red-500 text-xs mt-1">{err('supplier_name')}</p>}
                         </div>
 
                         <div className="space-y-2">
-                            <Label className="text-xs text-gray-600 font-normal">Country</Label>
-                            <select 
-                                className="flex h-8 w-full border-0 border-b border-gray-200 bg-white px-0 py-1 text-sm text-gray-700 focus:outline-none focus:ring-0"
+                            <Label className="text-xs text-gray-600 font-normal">Country <span className="text-red-500">*</span></Label>
+                            <Input 
+                                className={`h-8 border-0 border-b rounded-none px-0 text-sm shadow-none focus-visible:ring-0 placeholder:text-gray-400 ${err('country') ? 'border-red-400' : 'border-gray-200'}`}
                                 value={data.country}
                                 onChange={(e) => setData('country', e.target.value)}
-                            >
-                                <option value="">-- Please Select --</option>
-                                <option value="India">India</option>
-                            </select>
+                                placeholder="Enter Country"
+                            />
+                            {err('country') && <p className="text-red-500 text-xs mt-1">{err('country')}</p>}
                         </div>
                         <div className="space-y-2">
-                            <Label className="text-xs text-gray-600 font-normal">State</Label>
+                            <Label className="text-xs text-gray-600 font-normal">State <span className="text-red-500">*</span></Label>
                             <select 
-                                className="flex h-8 w-full border-0 border-b border-gray-200 bg-white px-0 py-1 text-sm text-gray-400 focus:outline-none focus:ring-0"
+                                className={`flex h-8 w-full border-0 border-b bg-white px-0 py-1 text-sm text-gray-700 focus:outline-none focus:ring-0 ${err('state') ? 'border-red-400' : 'border-gray-200'}`}
                                 value={data.state}
                                 onChange={(e) => setData('state', e.target.value)}
                             >
                                 <option value="">-- Please Select --</option>
-                                <option value="Maharashtra">Maharashtra</option>
-                                <option value="Gujarat">Gujarat</option>
+                                {statesOfIndia.map(s => <option key={s} value={s}>{s}</option>)}
                             </select>
+                            {err('state') && <p className="text-red-500 text-xs mt-1">{err('state')}</p>}
                         </div>
                         <div className="space-y-2">
-                            <Label className="text-xs text-gray-600 font-normal">City</Label>
-                            <select 
-                                className="flex h-8 w-full border-0 border-b border-gray-200 bg-white px-0 py-1 text-sm text-gray-400 focus:outline-none focus:ring-0"
+                            <Label className="text-xs text-gray-600 font-normal">City <span className="text-red-500">*</span></Label>
+                            <Input 
+                                className={`h-8 border-0 border-b rounded-none px-0 text-sm shadow-none focus-visible:ring-0 placeholder:text-gray-400 ${err('city') ? 'border-red-400' : 'border-gray-200'}`}
                                 value={data.city}
                                 onChange={(e) => setData('city', e.target.value)}
-                            >
-                                <option value="">-- Please Select --</option>
-                                <option value="Mumbai">Mumbai</option>
-                                <option value="Ahmedabad">Ahmedabad</option>
-                            </select>
+                                placeholder="Enter City"
+                            />
+                            {err('city') && <p className="text-red-500 text-xs mt-1">{err('city')}</p>}
                         </div>
                         <div className="hidden md:block"></div> 
 
@@ -245,16 +277,20 @@ export default function SupplierMaster({ suppliers = [] }: Props) {
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <Label className="text-xs text-gray-600 font-normal">Location</Label>
-                            <select 
-                                className="flex h-8 w-full border-0 border-b border-gray-200 bg-white px-0 py-1 text-sm text-gray-700 focus:outline-none focus:ring-0"
-                                value={data.location}
-                                onChange={(e) => setData('location', e.target.value)}
-                            >
-                                <option value="">-- Please Select --</option>
-                                <option value="Local Supplier">Local Supplier</option>
-                                <option value="International Supplier">International Supplier</option>
-                            </select>
+                            <Label className="text-xs text-gray-600 font-normal">Location Type</Label>
+                            <div className="flex h-8 w-full border-b border-gray-200 bg-gray-50 px-3 py-1 items-center">
+                                {data.location ? (
+                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-black uppercase ${
+                                        data.location === 'HQ'
+                                            ? 'bg-purple-100 text-purple-700'
+                                            : 'bg-blue-100 text-blue-700'
+                                    }`}>
+                                        {data.location}
+                                    </span>
+                                ) : (
+                                    <span className="text-sm text-gray-400 italic">Auto-linked from Location Master</span>
+                                )}
+                            </div>
                         </div>
 
                         <div className="space-y-2">
@@ -279,8 +315,9 @@ export default function SupplierMaster({ suppliers = [] }: Props) {
                             <Input className="h-8 border-0 border-b border-gray-200 rounded-none px-0 text-sm shadow-none focus-visible:ring-0 placeholder:text-gray-400" placeholder="Please Enter FD Registration Number" value={data.fda_registration_number} onChange={(e) => setData('fda_registration_number', e.target.value)} />
                         </div>
                         <div className="space-y-2 md:col-start-1">
-                            <Label className="text-xs text-gray-600 font-normal">Contact Number</Label>
-                            <Input className="h-8 border-0 border-b border-gray-200 rounded-none px-0 text-sm shadow-none focus-visible:ring-0 placeholder:text-gray-400" placeholder="Please Enter Contact Number" value={data.contact_number} onChange={(e) => setData('contact_number', e.target.value)} />
+                            <Label className="text-xs text-gray-600 font-normal">Contact Number <span className="text-red-500">*</span></Label>
+                            <Input className={`h-8 border-0 border-b rounded-none px-0 text-sm shadow-none focus-visible:ring-0 placeholder:text-gray-400 ${err('contact_number') ? 'border-red-400' : 'border-gray-200'}`} placeholder="Please Enter Contact Number" value={data.contact_number} onChange={(e) => setData('contact_number', e.target.value)} />
+                            {err('contact_number') && <p className="text-red-500 text-xs mt-1">{err('contact_number')}</p>}
                         </div>
                         <div className="space-y-2">
                             <Label className="text-xs text-gray-600 font-normal">Email</Label>

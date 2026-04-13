@@ -39,6 +39,8 @@ class LocationController extends Controller
         // Auto-create a Supplier entry mirroring this location
         Supplier::create([
             'supplier_name'        => $location->location_legal_name,
+            'location_id'          => $location->id,
+            'location'             => $location->location_type,
             'contact_number'       => $location->contact_number,
             'email'                => $location->email,
             'country'              => $location->country,

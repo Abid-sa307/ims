@@ -7,11 +7,12 @@ use Illuminate\Database\Eloquent\Model;
 class Supplier extends Model
 {
     protected $fillable = [
-        'supplier_name', 'country', 'state', 'city', 'address', 'location', 
-        'gst_number', 'pan', 'vat_number', 'lut_number', 'fda_registration_number', 
-        'contact_number', 'email', 'pincode', 'supplier_code_tally', 'contact_person_name', 
-        'logo', 'cut_off_from_time', 'cut_off_to_time', 'allow_modify_moq', 
-        'enable_order_level_tax', 'disable_rounding_off', 'reduce_qty_with_packaging_material', 
+        'supplier_name', 'country', 'state', 'city', 'address', 'location',
+        'location_id',
+        'gst_number', 'pan', 'vat_number', 'lut_number', 'fda_registration_number',
+        'contact_number', 'email', 'pincode', 'supplier_code_tally', 'contact_person_name',
+        'logo', 'cut_off_from_time', 'cut_off_to_time', 'allow_modify_moq',
+        'enable_order_level_tax', 'disable_rounding_off', 'reduce_qty_with_packaging_material',
         'enable_credit_limit', 'dispatch_only_prepaid_orders', 'enable_royalty_service'
     ];
     

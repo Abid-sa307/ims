@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
+use App\Models\Location;
 use App\Models\Supplier;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
@@ -12,9 +13,11 @@ class SupplierController extends Controller
 {
     public function index()
     {
+        // Eager-load a "location" relationship if it exists, otherwise raw
         $suppliers = Supplier::latest()->get();
         return Inertia::render('Master/SupplierMaster', [
-            'suppliers' => $suppliers
+            'suppliers' => $suppliers,
+            'locations' => Location::select('id', 'location_legal_name', 'location_type')->get(),
         ]);
     }
 
@@ -22,6 +25,10 @@ class SupplierController extends Controller
     {
         $request->validate([
             'supplier_name' => 'required|string|max:255',
+            'country'       => 'required|string',
+            'state'         => 'required|string',
+            'city'          => 'required|string',
+            'contact_number'=> 'required|string',
         ]);
 
         $data = $request->all();
@@ -40,6 +47,10 @@ class SupplierController extends Controller
         $supplier = Supplier::findOrFail($id);
         $request->validate([
             'supplier_name' => 'required|string|max:255',
+            'country'       => 'required|string',
+            'state'         => 'required|string',
+            'city'          => 'required|string',
+            'contact_number'=> 'required|string',
         ]);
 
         $data = $request->all();
