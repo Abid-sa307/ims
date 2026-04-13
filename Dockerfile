@@ -1,5 +1,5 @@
 # Stage 1: Build Assets
-FROM php:8.3-cli AS build
+FROM php:8.4-cli AS build
 
 # Install Node.js
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
@@ -32,7 +32,7 @@ ENV APP_KEY=base64:Zi682yEnRfxnCo4oj2i33AQAu66bYMTHcgd0Dqtd7RY=
 RUN npm install && npm run build
 
 # Stage 2: Production Server
-FROM php:8.3-apache
+FROM php:8.4-apache
 
 # Set environment for Render port
 ENV PORT=10000

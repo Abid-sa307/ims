@@ -273,6 +273,14 @@ const mainNavItems: NavItem[] = [
                 title: 'Price Deviation For Sales',
                 href: '/reports/sales/price-deviation',
             },
+            {
+                title: 'Sales Ledger',
+                href: '/reports/sales/ledger',
+            },
+            {
+                title: 'Outstanding Sales',
+                href: '/reports/sales/outstanding',
+            },
         ],
     },
     {

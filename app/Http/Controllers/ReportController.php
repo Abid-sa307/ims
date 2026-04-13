@@ -14,6 +14,7 @@ use App\Models\ItemWarehouseMapping;
 use App\Models\DebitNote;
 use App\Models\CreditNote;
 use App\Models\Customer;
+use App\Models\CustomerPayment;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
@@ -230,6 +231,54 @@ class ReportController extends Controller
             ->get();
 
         return Inertia::render('Reports/Sales/PriceDeviation', [
+            'reportData' => $reportData,
+        ]);
+    }
+
+    public function salesLedger(Request $request)
+    {
+        $customerId = $request->customer_id;
+        
+        $invoices = SalesInvoice::where('customer_id', $customerId)
+            ->select('id', 'invoice_number as reference', 'invoice_date as date', 'grand_total as amount', DB::raw("'Invoice' as type"))
+            ->get();
+            
+        $payments = CustomerPayment::where('customer_id', $customerId)
+            ->select('id', 'payment_number as reference', 'payment_date as date', 'amount', DB::raw("'Payment' as type"))
+            ->get();
+            
+        $creditNotes = CreditNote::where('customer_id', $customerId)
+            ->select('id', 'credit_note_number as reference', 'date', 'grand_total as amount', DB::raw("'Credit Note' as type"))
+            ->get();
+
+        $ledger = $invoices->concat($payments)->concat($creditNotes)->sortBy('date')->values();
+
+        return Inertia::render('Reports/Sales/SalesLedger', [
+            'reportData' => $ledger,
+            'customers' => Customer::all(),
+            'filters' => $request->all(),
+        ]);
+    }
+
+    public function outstandingSales(Request $request)
+    {
+        // This report typically calculates (Total Invoiced - Total Paid - Total Credits) per customer
+        $reportData = Customer::select('customers.id', 'customers.customer_name')
+            ->leftJoin('sales_invoices', 'customers.id', '=', 'sales_invoices.customer_id')
+            ->leftJoin('customer_payments', 'customers.id', '=', 'customer_payments.customer_id')
+            ->leftJoin('credit_notes', 'customers.id', '=', 'credit_notes.customer_id')
+            ->select(
+                'customers.customer_name',
+                DB::raw('SUM(DISTINCT sales_invoices.grand_total) as total_invoiced'),
+                DB::raw('SUM(DISTINCT customer_payments.amount) as total_paid'),
+                DB::raw('SUM(DISTINCT credit_notes.grand_total) as total_credits'),
+                DB::raw('IFNULL(SUM(DISTINCT sales_invoices.grand_total), 0) - IFNULL(SUM(DISTINCT customer_payments.amount), 0) - IFNULL(SUM(DISTINCT credit_notes.grand_total), 0) as outstanding_balance')
+            )
+            ->groupBy('customers.id', 'customers.customer_name')
+            ->having('outstanding_balance', '>', 0)
+            ->get();
+
+        return Inertia::render('Reports/Sales/OutstandingSales', [
             'reportData' => $reportData,
         ]);
     }

@@ -83,6 +83,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('sales/date-wise', [\App\Http\Controllers\ReportController::class, 'dateWiseSales'])->name('reports.sales.date-wise');
         Route::get('sales/credit-note-register', [\App\Http\Controllers\ReportController::class, 'creditNoteRegister'])->name('reports.sales.credit-note-register');
         Route::get('sales/price-deviation', [\App\Http\Controllers\ReportController::class, 'priceDeviationSales'])->name('reports.sales.price-deviation');
+        Route::get('sales/ledger', [\App\Http\Controllers\ReportController::class, 'salesLedger'])->name('reports.sales.ledger');
+        Route::get('sales/outstanding', [\App\Http\Controllers\ReportController::class, 'outstandingSales'])->name('reports.sales.outstanding');
         
         // Stock Reports
         Route::get('stock/valuation', [\App\Http\Controllers\ReportController::class, 'stockValuation'])->name('reports.stock.valuation');

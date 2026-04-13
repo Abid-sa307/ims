@@ -13,6 +13,13 @@ return new class extends Migration
     {
         Schema::create('customer_payments', function (Blueprint $table) {
             $table->id();
+            $table->string('payment_number')->unique();
+            $table->date('payment_date');
+            $table->foreignId('customer_id')->constrained('customers');
+            $table->decimal('amount', 15, 2);
+            $table->string('payment_method'); // Cash, Bank, Check, etc.
+            $table->string('reference_number')->nullable();
+            $table->text('notes')->nullable();
             $table->timestamps();
         });
     }
