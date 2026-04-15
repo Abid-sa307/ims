@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, Link } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
 import { Input } from '@/components/ui/input';
@@ -119,9 +119,11 @@ export default function WastageEntry({
                             <span className="text-gray-500">Date:-</span>
                             <span className="font-medium text-[#162a5b]">{data.date}</span>
                         </div>
-                        <Button variant="outline" size="icon" className="h-9 w-9 bg-white">
-                            <List className="size-4" />
-                        </Button>
+                        <Link href="/stock/current-stock">
+                            <Button variant="outline" size="icon" className="h-9 w-9 bg-white">
+                                <List className="size-4" />
+                            </Button>
+                        </Link>
                     </div>
                 </div>
 

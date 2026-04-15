@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, Link } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
 import { Input } from '@/components/ui/input';
@@ -120,9 +120,11 @@ export default function StockAdjustment({
                             <span className="text-gray-500">Date:-</span>
                             <span className="font-medium text-[#162a5b]">{new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                         </div>
-                        <Button variant="outline" size="icon" className="h-9 w-9">
-                            <List className="size-4" />
-                        </Button>
+                        <Link href="/stock/current-stock">
+                            <Button variant="outline" size="icon" className="h-9 w-9">
+                                <List className="size-4" />
+                            </Button>
+                        </Link>
                     </div>
                 </div>
 

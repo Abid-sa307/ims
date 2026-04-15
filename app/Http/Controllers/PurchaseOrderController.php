@@ -7,6 +7,8 @@ use App\Models\PurchaseOrderItem;
 use App\Models\Location;
 use App\Models\Supplier;
 use App\Models\Item;
+use App\Models\Warehouse;
+use App\Models\ItemWarehouseMapping;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -87,19 +89,118 @@ class PurchaseOrderController extends Controller
 
             DB::commit();
 
-            return redirect()->route('purchase.approved-po')->with('success', 'Purchase Order generated successfully.');
+            return redirect()->route('purchase.summary')->with('success', 'Purchase Order generated successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
+            \Log::error('PO Generation Failed: ' . $e->getMessage(), [
+                'exception' => $e,
+                'request' => $request->all()
+            ]);
             return back()->withErrors(['error' => 'Failed to generate Purchase Order. ' . $e->getMessage()]);
         }
     }
 
-    public function approvedPOs()
+    public function approvedPOs(Request $request)
     {
-        $approvedPOs = PurchaseOrder::with('supplier')->where('status', 'approved')->latest()->get();
+        $query = PurchaseOrder::with('supplier')
+            ->whereIn('status', ['pending', 'approved']);
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('po_date', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('po_date', '<=', $request->date_to);
+        }
+
         return Inertia::render('Purchase/ApprovedPO', [
-            'purchaseOrders' => $approvedPOs
+            'purchaseOrders' => $query->latest()->get(),
+            'filters' => $request->only(['date_from', 'date_to'])
         ]);
+    }
+
+    public function sendPOs(Request $request)
+    {
+        $query = PurchaseOrder::with('supplier')
+            ->whereIn('status', ['approved', 'sent']);
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('po_date', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('po_date', '<=', $request->date_to);
+        }
+
+        return Inertia::render('Purchase/SendPO', [
+            'purchaseOrders' => $query->latest()->get(),
+            'filters' => $request->only(['date_from', 'date_to'])
+        ]);
+    }
+
+    public function send(PurchaseOrder $purchaseOrder)
+    {
+        $purchaseOrder->update(['status' => 'sent']);
+        return back()->with('success', 'Purchase Order sent to supplier.');
+    }
+
+    public function receivedPOs(Request $request)
+    {
+        $query = PurchaseOrder::with('supplier')
+            ->whereIn('status', ['sent', 'received']);
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('po_date', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('po_date', '<=', $request->date_to);
+        }
+
+        return Inertia::render('Purchase/ReceivedPO', [
+            'purchaseOrders' => $query->latest()->get(),
+            'filters' => $request->only(['date_from', 'date_to'])
+        ]);
+    }
+
+    public function receive(PurchaseOrder $purchaseOrder)
+    {
+        DB::transaction(function () use ($purchaseOrder) {
+            $purchaseOrder->update(['status' => 'received']);
+
+            // Find first warehouse at this location to update stock
+            $warehouse = Warehouse::where('location_id', $purchaseOrder->location_id)->first();
+            
+            if ($warehouse) {
+                // Load items if not already loaded
+                $purchaseOrder->load('items.item');
+
+                foreach ($purchaseOrder->items as $poItem) {
+                    $item = $poItem->item;
+                    if ($item) {
+                        $mapping = ItemWarehouseMapping::firstOrNew([
+                            'location_id' => $purchaseOrder->location_id,
+                            'warehouse_id' => $warehouse->id,
+                            'item_id' => $poItem->item_id,
+                        ]);
+                        
+                        // If branding new, ensure category is set
+                        if (!$mapping->exists) {
+                            $mapping->item_category_id = $item->item_category_id;
+                            $mapping->current_quantity = 0;
+                        }
+                        
+                        $mapping->current_quantity += $poItem->qty;
+                        $mapping->save();
+                    }
+                }
+            }
+        });
+
+        return back()->with('success', 'Purchase Order marked as received and stock updated.');
+    }
+
+    public function approve(PurchaseOrder $purchaseOrder)
+    {
+        $purchaseOrder->update(['status' => 'approved']);
+        return back()->with('success', 'Purchase Order approved successfully.');
     }
 
     public function autoApprovedPOs()
@@ -107,6 +208,23 @@ class PurchaseOrderController extends Controller
         $autoApprovedPOs = PurchaseOrder::with('supplier')->where('is_auto_approved', true)->latest()->get();
         return Inertia::render('Purchase/AutoApprovedPO', [
             'purchaseOrders' => $autoApprovedPOs
+        ]);
+    }
+
+    public function summary(Request $request)
+    {
+        $query = PurchaseOrder::with(['supplier', 'location'])->latest();
+
+        if ($request->filled('search')) {
+            $query->where('order_number', 'like', '%' . $request->search . '%')
+                  ->orWhereHas('supplier', function($q) use ($request) {
+                      $q->where('supplier_name', 'like', '%' . $request->search . '%');
+                  });
+        }
+
+        return Inertia::render('Purchase/Summary', [
+            'purchaseOrders' => $query->paginate(15)->withQueryString(),
+            'filters' => $request->only(['search'])
         ]);
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\PriceList;
 use App\Models\PriceListItem;
+use App\Models\Supplier;
 use App\Models\Location;
 use App\Models\ItemCategory;
 use App\Models\Item;
@@ -16,7 +17,9 @@ class PriceListController extends Controller
     public function index()
     {
         return Inertia::render('Pricing/PriceList', [
-            'locations' => Location::select('id', 'location_legal_name', 'location_type')->get(),
+            'suppliers' => Supplier::select('id', 'supplier_name', 'location')->get(),
+            'locations' => Location::where('location_type', 'Customer')
+                ->select('id', 'location_legal_name', 'location_type')->get(),
             'categories' => ItemCategory::all(),
             'items' => Item::with('baseUnit')->select('id', 'item_name', 'standard_sale_price', 'tax_percent', 'base_unit_id', 'item_category_id')->get(),
             'priceLists' => PriceList::with(['seller', 'buyer'])->latest()->get(),
@@ -47,6 +50,7 @@ class PriceListController extends Controller
                     'price_list_id' => $priceList->id,
                     'item_id' => $item['item_id'],
                     'selling_price' => $item['selling_price'],
+                    'discount' => $item['discount'] ?? null,
                     'tax_percent' => $item['tax_percent'] ?? null,
                     'uom' => $item['uom'] ?? null,
                 ]);

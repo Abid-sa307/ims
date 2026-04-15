@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
 import { Input } from '@/components/ui/input';
@@ -27,9 +27,11 @@ export default function GenerateInvoice() {
                 {/* Header */}
                 <div className="flex items-center justify-between border-b pb-4 mb-6">
                     <h1 className="text-xl font-bold tracking-tight text-[#162a5b]">Generate Invoice</h1>
-                    <Button variant="outline" size="icon" className="h-8 w-8 text-muted-foreground">
-                        <List className="h-4 w-4" />
-                    </Button>
+                    <Link href="/reports/sales/summary">
+                        <Button variant="outline" size="icon" className="h-8 w-8 text-muted-foreground">
+                            <List className="h-4 w-4" />
+                        </Button>
+                    </Link>
                 </div>
 
                 <div className="bg-white rounded-lg border shadow-sm p-6 mb-6">

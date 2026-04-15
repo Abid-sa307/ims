@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { List, FileUp, Plus, Trash2, Edit, Save, X, LayoutGrid } from 'lucide-react';
+import { List, FileUp, Plus, Trash2, Edit, Save, X, LayoutGrid, Search } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
@@ -17,7 +17,6 @@ interface Item {
     item_name: string;
     item_category_id: number | null;
     item_sub_category_id: number | null;
-    brand_id: number | null;
     item_type_id: number | null;
     item_name_gujarati: string | null;
     equivalent_selling_item: string | null;
@@ -61,7 +60,6 @@ interface Props {
     categories: any[];
     subCategories: any[];
     itemTypes: any[];
-    brands: any[];
     uoms: any[];
 }
 
@@ -75,10 +73,10 @@ export default function ItemMaster({
     categories = [], 
     subCategories = [], 
     itemTypes = [], 
-    brands = [], 
     uoms = [] 
 }: Props) {
     const [showList, setShowList] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
     const [editingId, setEditingId] = useState<number | null>(null);
     const importFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -86,13 +84,12 @@ export default function ItemMaster({
         item_name: '',
         item_category_id: '' as any,
         item_sub_category_id: '' as any,
-        brand_id: '' as any,
         item_type_id: '' as any,
         item_name_gujarati: '',
         equivalent_selling_item: '',
         safety_quantity: 0,
         base_unit_id: '' as any,
-        default_tax_id: '' as any,
+        default_tax_id: '0' as any,
         selling_item_as: 'Goods' as 'Goods' | 'Service',
         hsn_code: '',
         sac_code: '',
@@ -124,6 +121,27 @@ export default function ItemMaster({
         item_tally_code: '',
         uom_conversions: [] as any[],
     });
+
+    useEffect(() => {
+        // Reset sub-category and item type when category changes (only in add mode)
+        if (!editingId) {
+            setData((prev: any) => ({
+                ...prev,
+                item_sub_category_id: '',
+                item_type_id: ''
+            }));
+        }
+    }, [data.item_category_id]);
+
+    useEffect(() => {
+        // Reset item type when sub-category changes (only in add mode)
+        if (!editingId) {
+            setData((prev: any) => ({
+                ...prev,
+                item_type_id: ''
+            }));
+        }
+    }, [data.item_sub_category_id]);
 
     const addUomConversion = () => {
         setData('uom_conversions', [
@@ -185,7 +203,6 @@ export default function ItemMaster({
             ...item,
             item_category_id: item.item_category_id?.toString() || '',
             item_sub_category_id: item.item_sub_category_id?.toString() || '',
-            brand_id: item.brand_id?.toString() || '',
             item_type_id: item.item_type_id?.toString() || '',
             base_unit_id: item.base_unit_id?.toString() || '',
             default_tax_id: item.default_tax_id?.toString() || '',
@@ -200,6 +217,14 @@ export default function ItemMaster({
         }
     };
 
+    const filteredItems = items.filter(item => {
+        if (!searchQuery) return true;
+        const lowercaseQuery = searchQuery.toLowerCase();
+        return (item.item_name?.toLowerCase().includes(lowercaseQuery) || 
+               item.item_sku?.toLowerCase().includes(lowercaseQuery) || 
+               (item as any).category?.name?.toLowerCase().includes(lowercaseQuery));
+    });
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Item Master" />
@@ -211,7 +236,19 @@ export default function ItemMaster({
                         <h1 className="text-xl font-bold text-slate-900">Item Master</h1>
                         <p className="text-sm text-slate-500">Manage your product inventory and specifications</p>
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex gap-3 items-center">
+                        {showList && (
+                            <div className="relative">
+                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+                                <Input
+                                    type="text"
+                                    placeholder="Search items..."
+                                    className="pl-9 h-9 w-[250px] border-slate-200 text-sm focus-visible:ring-indigo-500 rounded-md"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
+                            </div>
+                        )}
                         <input 
                             type="file" 
                             ref={importFileInputRef} 
@@ -254,8 +291,8 @@ export default function ItemMaster({
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {items.length > 0 ? (
-                                        items.map((item) => (
+                                    {filteredItems.length > 0 ? (
+                                        filteredItems.map((item) => (
                                             <TableRow key={item.id} className="hover:bg-slate-50/50 transition-colors">
                                                 <TableCell className="font-medium text-slate-900">{item.item_name}</TableCell>
                                                 <TableCell className="text-slate-600">{(item as any).category?.name || 'N/A'}</TableCell>
@@ -300,36 +337,35 @@ export default function ItemMaster({
                                         <Select value={data.item_category_id} onValueChange={(v) => setData('item_category_id', v)}>
                                             <SelectTrigger><SelectValue placeholder="-- Please Select --" /></SelectTrigger>
                                             <SelectContent>
-                                                {categories.map(c => <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>)}
+                                                {categories.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}
                                             </SelectContent>
                                         </Select>
                                     </div>
                                     <div className="space-y-2">
                                         <Label className="text-slate-600">Sub Category</Label>
-                                        <Select value={data.item_sub_category_id} onValueChange={(v) => setData('item_sub_category_id', v)}>
-                                            <SelectTrigger><SelectValue placeholder="-- Please Select --" /></SelectTrigger>
+                                        <Select 
+                                            value={data.item_sub_category_id} 
+                                            onValueChange={(v) => setData('item_sub_category_id', v)}
+                                            disabled={!data.item_category_id}
+                                        >
+                                            <SelectTrigger><SelectValue placeholder={data.item_category_id ? "-- Please Select --" : "Select Category First"} /></SelectTrigger>
                                             <SelectContent>
-                                                {subCategories.filter(sc => sc.item_category_id.toString() === data.item_category_id).map(sc => (
-                                                    <SelectItem key={sc.id} value={sc.id.toString()}>{sc.name}</SelectItem>
+                                                {subCategories.filter(sc => String(sc.category_id) === String(data.item_category_id)).map(sc => (
+                                                    <SelectItem key={sc.id} value={String(sc.id)}>{sc.name}</SelectItem>
                                                 ))}
                                             </SelectContent>
                                         </Select>
                                     </div>
                                     <div className="space-y-2">
-                                        <Label className="text-slate-600">Brand</Label>
-                                        <Select value={data.brand_id} onValueChange={(v) => setData('brand_id', v)}>
-                                            <SelectTrigger><SelectValue placeholder="-- Please Select --" /></SelectTrigger>
-                                            <SelectContent>
-                                                {brands.map(b => <SelectItem key={b.id} value={b.id.toString()}>{b.name}</SelectItem>)}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    <div className="space-y-2">
                                         <Label className="text-slate-600">Item Type</Label>
-                                        <Select value={data.item_type_id} onValueChange={(v) => setData('item_type_id', v)}>
+                                        <Select 
+                                            value={data.item_type_id} 
+                                            onValueChange={(v) => setData('item_type_id', v)}
+                                            disabled={!data.item_sub_category_id}
+                                        >
                                             <SelectTrigger><SelectValue placeholder="-- Please Select --" /></SelectTrigger>
                                             <SelectContent>
-                                                {itemTypes.map(t => <SelectItem key={t.id} value={t.id.toString()}>{t.name}</SelectItem>)}
+                                                {itemTypes.map(t => <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>)}
                                             </SelectContent>
                                         </Select>
                                     </div>
@@ -346,7 +382,7 @@ export default function ItemMaster({
                                         <Select value={data.equivalent_selling_item || ''} onValueChange={v => setData('equivalent_selling_item', v)}>
                                             <SelectTrigger><SelectValue placeholder="-- Please Select --" /></SelectTrigger>
                                             <SelectContent>
-                                                {items.map(i => <SelectItem key={i.id} value={i.id.toString()}>{i.item_name}</SelectItem>)}
+                                                {items.map(i => <SelectItem key={i.id} value={String(i.id)}>{i.item_name}</SelectItem>)}
                                             </SelectContent>
                                         </Select>
                                     </div>
@@ -359,7 +395,7 @@ export default function ItemMaster({
                                         <Select value={data.base_unit_id} onValueChange={v => setData('base_unit_id', v)}>
                                             <SelectTrigger><SelectValue placeholder="-- Please Select --" /></SelectTrigger>
                                             <SelectContent>
-                                                {uoms.map(u => <SelectItem key={u.id} value={u.id.toString()}>{u.name}</SelectItem>)}
+                                                {uoms.map(u => <SelectItem key={u.id} value={String(u.id)}>{u.name}</SelectItem>)}
                                             </SelectContent>
                                         </Select>
                                     </div>
@@ -394,7 +430,7 @@ export default function ItemMaster({
                                                         <Select value={conv.target_uom_id} onValueChange={v => updateUomConversion(index, 'target_uom_id', v)}>
                                                             <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                                                             <SelectContent>
-                                                                {uoms.map(u => <SelectItem key={u.id} value={u.id.toString()}>{u.name}</SelectItem>)}
+                                                                {uoms.map(u => <SelectItem key={u.id} value={String(u.id)}>{u.name}</SelectItem>)}
                                                             </SelectContent>
                                                         </Select>
                                                     </TableCell>
@@ -438,6 +474,7 @@ export default function ItemMaster({
                                         <Select value={data.default_tax_id || ''} onValueChange={v => setData('default_tax_id', v)}>
                                             <SelectTrigger><SelectValue placeholder="-- Please Select --" /></SelectTrigger>
                                             <SelectContent>
+                                                <SelectItem value="0">GST 0%</SelectItem>
                                                 <SelectItem value="1">GST 5%</SelectItem>
                                                 <SelectItem value="2">GST 12%</SelectItem>
                                                 <SelectItem value="3">GST 18%</SelectItem>
@@ -470,22 +507,26 @@ export default function ItemMaster({
                                     </div>
 
                                     {/* Toggles Row */}
-                                    <div className="md:col-span-4 grid grid-cols-2 lg:grid-cols-4 gap-6 py-4 border-y border-slate-100 bg-slate-50/30 px-4 -mx-6">
-                                        <div className="flex items-center justify-between">
-                                            <Label className="text-xs font-medium text-slate-700">Manufacture This Item?</Label>
+                                    <div className="md:col-span-4 grid grid-cols-2 lg:grid-cols-5 gap-6 py-4 border-y border-slate-100 bg-slate-50/30 px-4 -mx-6">
+                                        <div className="flex items-center justify-between gap-4">
+                                            <Label className="text-xs font-medium text-slate-700 leading-tight">Manufacture This Item?</Label>
                                             <Switch checked={data.is_manufacture} onCheckedChange={v => setData('is_manufacture', v)} />
                                         </div>
-                                        <div className="flex items-center justify-between">
-                                            <Label className="text-xs font-medium text-slate-700">Is Fat Item?</Label>
+                                        <div className="flex items-center justify-between gap-4">
+                                            <Label className="text-xs font-medium text-slate-700 leading-tight">Is Fat Item?</Label>
                                             <Switch checked={data.is_fat_item} onCheckedChange={v => setData('is_fat_item', v)} />
                                         </div>
-                                        <div className="flex items-center justify-between">
-                                            <Label className="text-xs font-medium text-slate-700">Is Packing Item?</Label>
+                                        <div className="flex items-center justify-between gap-4">
+                                            <Label className="text-xs font-medium text-slate-700 leading-tight">Is Packing Item?</Label>
                                             <Switch checked={data.is_packing_item} onCheckedChange={v => setData('is_packing_item', v)} />
                                         </div>
-                                        <div className="flex items-center justify-between">
-                                            <Label className="text-xs font-medium text-slate-700">Has Parent Item?</Label>
+                                        <div className="flex items-center justify-between gap-4">
+                                            <Label className="text-xs font-medium text-slate-700 leading-tight">Has Parent Item?</Label>
                                             <Switch checked={data.has_parent_item} onCheckedChange={v => setData('has_parent_item', v)} />
+                                        </div>
+                                        <div className="flex items-center justify-between gap-4">
+                                            <Label className="text-xs font-medium text-slate-700 leading-tight">Allow Multiple Item in PO</Label>
+                                            <Switch checked={data.allow_multiple_entry_po} onCheckedChange={v => setData('allow_multiple_entry_po', v)} />
                                         </div>
                                     </div>
 

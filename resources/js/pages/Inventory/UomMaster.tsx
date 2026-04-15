@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PlusCircle, Pencil, Trash2, Save, X, Ruler } from 'lucide-react';
+import { PlusCircle, Pencil, Trash2, Save, X, Ruler, Search } from 'lucide-react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Inventory', href: '#' },
@@ -21,6 +21,7 @@ interface Uom {
 
 export default function UomMaster({ uoms = [] }: { uoms: Uom[] }) {
     const [viewMode, setViewMode] = useState<'list' | 'form'>('list');
+    const [searchQuery, setSearchQuery] = useState('');
     const [isEditing, setIsEditing] = useState(false);
 
     const { data, setData, post, put, delete: destroy, processing, errors, reset, clearErrors } = useForm({
@@ -68,6 +69,12 @@ export default function UomMaster({ uoms = [] }: { uoms: Uom[] }) {
         }
     };
 
+    const filteredUoms = uoms.filter(uom => {
+        if (!searchQuery) return true;
+        const lowercaseQuery = searchQuery.toLowerCase();
+        return uom.name?.toLowerCase().includes(lowercaseQuery);
+    });
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="UOM Master" />
@@ -78,10 +85,22 @@ export default function UomMaster({ uoms = [] }: { uoms: Uom[] }) {
                         <p className="text-sm text-gray-500">Manage Unit of Measures (UOM) for inventory items.</p>
                     </div>
                     {viewMode === 'list' && (
-                        <Button onClick={handleCreateNew} className="bg-[#162a5b] hover:bg-[#162a5b]/90 gap-2">
-                            <PlusCircle className="size-4" />
-                            Add UOM
-                        </Button>
+                        <div className="flex gap-3 items-center">
+                            <div className="relative">
+                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+                                <Input
+                                    type="text"
+                                    placeholder="Search UOMs..."
+                                    className="pl-9 h-9 w-[250px] border-gray-200 text-sm focus-visible:ring-[#162a5b] rounded-md"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
+                            </div>
+                            <Button onClick={handleCreateNew} className="bg-[#162a5b] hover:bg-[#162a5b]/90 gap-2">
+                                <PlusCircle className="size-4" />
+                                Add UOM
+                            </Button>
+                        </div>
                     )}
                 </div>
 
@@ -97,7 +116,7 @@ export default function UomMaster({ uoms = [] }: { uoms: Uom[] }) {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {uoms.length > 0 ? uoms.map((uom) => (
+                                    {filteredUoms.length > 0 ? filteredUoms.map((uom) => (
                                         <TableRow key={uom.id} className="hover:bg-gray-50/50">
                                             <TableCell className="text-gray-500">{uom.id}</TableCell>
                                             <TableCell className="font-medium text-[#162a5b]">{uom.name}</TableCell>

@@ -1,4 +1,4 @@
-import { Head, usePage, useForm } from '@inertiajs/react';
+import { Head, usePage, useForm, Link } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
 import { Input } from '@/components/ui/input';
@@ -213,9 +213,11 @@ export default function GenerateDebitNote() {
                     <h1 className="text-xl font-bold tracking-tight text-blue-900 flex items-center gap-2">
                          <FileText className="size-5" /> Generate Debit Note
                     </h1>
-                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground border">
-                        <List className="h-4 w-4" />
-                    </Button>
+                    <Link href="/purchase/debit-note">
+                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground border">
+                            <List className="h-4 w-4" />
+                        </Button>
+                    </Link>
                 </div>
 
                 {/* Primary Inputs */}

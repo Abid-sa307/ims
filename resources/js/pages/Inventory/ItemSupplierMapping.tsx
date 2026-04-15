@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PlusCircle, Pencil, Trash2, Save, X, UserCheck, List } from 'lucide-react';
+import { PlusCircle, Pencil, Trash2, Save, X, UserCheck, List, Search } from 'lucide-react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Inventory', href: '#' },
@@ -33,6 +33,7 @@ interface Profile {
 
 export default function ItemSupplierMapping({ profiles = [], locations = [], warehouses = [], suppliers = [], categories = [], items = [] }: any) {
     const [viewMode, setViewMode] = useState<'list' | 'form'>('list');
+    const [searchQuery, setSearchQuery] = useState('');
     const [isEditing, setIsEditing] = useState(false);
 
     const { data, setData, post, put, delete: destroy, processing, errors, reset, clearErrors } = useForm({
@@ -81,6 +82,17 @@ export default function ItemSupplierMapping({ profiles = [], locations = [], war
         }
     };
 
+    const filteredProfiles = profiles.filter((p: Profile) => {
+        if (!searchQuery) return true;
+        const lowercaseQuery = searchQuery.toLowerCase();
+        return (p.profile_name?.toLowerCase().includes(lowercaseQuery) || 
+               p.supplier?.supplier_name?.toLowerCase().includes(lowercaseQuery) ||
+               p.location?.location_legal_name?.toLowerCase().includes(lowercaseQuery) ||
+               p.warehouse?.name?.toLowerCase().includes(lowercaseQuery) ||
+               p.category?.name?.toLowerCase().includes(lowercaseQuery) ||
+               p.item?.item_name?.toLowerCase().includes(lowercaseQuery));
+    });
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Item Supplier Mapping" />
@@ -91,10 +103,22 @@ export default function ItemSupplierMapping({ profiles = [], locations = [], war
                         <p className="text-sm text-gray-500">Map items to specific suppliers based on profiles and locations.</p>
                     </div>
                     {viewMode === 'list' && (
-                        <Button onClick={handleCreateNew} className="bg-[#162a5b] hover:bg-[#162a5b]/90 gap-2">
-                            <PlusCircle className="size-4" />
-                            Create Profile Mapping
-                        </Button>
+                        <div className="flex gap-3 items-center">
+                            <div className="relative">
+                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+                                <Input
+                                    type="text"
+                                    placeholder="Search mappings..."
+                                    className="pl-9 h-9 w-[250px] border-gray-200 text-sm focus-visible:ring-[#162a5b] rounded-md"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
+                            </div>
+                            <Button onClick={handleCreateNew} className="bg-[#162a5b] hover:bg-[#162a5b]/90 gap-2">
+                                <PlusCircle className="size-4" />
+                                Create Profile Mapping
+                            </Button>
+                        </div>
                     )}
                 </div>
 
@@ -122,7 +146,7 @@ export default function ItemSupplierMapping({ profiles = [], locations = [], war
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
-                                            {profiles.length > 0 ? profiles.map((p: Profile) => (
+                                            {filteredProfiles.length > 0 ? filteredProfiles.map((p: Profile) => (
                                                 <TableRow key={p.id} className="hover:bg-gray-50/50">
                                                     <TableCell className="font-bold text-[#162a5b]">{p.profile_name}</TableCell>
                                                     <TableCell className="text-gray-900 font-semibold">{p.supplier?.supplier_name}</TableCell>
@@ -158,7 +182,7 @@ export default function ItemSupplierMapping({ profiles = [], locations = [], war
                                     <Table>
                                         <TableHeader className="bg-gray-50/50"><TableRow><TableHead>Item Name</TableHead><TableHead>Category</TableHead><TableHead>Supplier</TableHead><TableHead>Warehouse</TableHead></TableRow></TableHeader>
                                         <TableBody>
-                                            {profiles.map((p: Profile) => (
+                                            {filteredProfiles.map((p: Profile) => (
                                                 <TableRow key={p.id} className="text-xs">
                                                     <TableCell className="font-bold">{p.item?.item_name}</TableCell>
                                                     <TableCell>{p.category?.name}</TableCell>

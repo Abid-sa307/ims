@@ -1,4 +1,4 @@
-import { Head, usePage, useForm } from '@inertiajs/react';
+import { Head, usePage, useForm, Link } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
 import { Input } from '@/components/ui/input';
@@ -148,9 +148,18 @@ export default function GeneratePO() {
             <form onSubmit={submit} className="flex h-full flex-col p-4 sm:p-6 lg:p-8 overflow-y-auto bg-gray-50/50">
                 <div className="flex items-center justify-between border-b pb-4 mb-6">
                     <h1 className="text-xl font-bold tracking-tight text-[#162a5b]">Generate Purchase Order</h1>
-                    <Button type="button" variant="outline" size="icon" className="h-8 w-8 text-muted-foreground">
-                        <List className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        {errors.error && (
+                            <div className="bg-red-50 text-red-600 px-3 py-1 rounded-md text-xs font-medium border border-red-100 animate-pulse">
+                                {errors.error}
+                            </div>
+                        )}
+                        <Link href="/purchase/summary">
+                            <Button type="button" variant="outline" size="icon" className="h-8 w-8 text-muted-foreground">
+                                <List className="h-4 w-4" />
+                            </Button>
+                        </Link>
+                    </div>
                 </div>
 
                 <div className="bg-white rounded-lg border shadow-sm p-6 mb-6">
@@ -266,6 +275,9 @@ export default function GeneratePO() {
                                             <button type="button" onClick={() => removeItemRow(index)}>
                                                 <Trash2 className="h-4 w-4 mx-auto text-red-500" />
                                             </button>
+                                            {errors[`items.${index}.item_id`] && (
+                                                <div className="text-[9px] text-red-500 mt-1 leading-tight">{errors[`items.${index}.item_id`]}</div>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}

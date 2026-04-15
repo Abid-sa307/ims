@@ -4,23 +4,37 @@ import { BreadcrumbItem } from '@/types';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Shield, UserPlus } from 'lucide-react';
+import { Shield, UserPlus, Search } from 'lucide-react';
+import { useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Configuration', href: '#' },
     { title: 'User Master', href: '/config/user-master' },
 ];
 
-export default function UserMaster() {
+export default function UserMaster({ users = [] }: { users?: any[] }) {
+    const [searchQuery, setSearchQuery] = useState('');
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="User Master" />
             <div className="flex h-full flex-col p-6 bg-gray-50/50">
                 <div className="flex items-center justify-between border-b pb-4 mb-6 border-t-2 border-t-[#162a5b] bg-white p-4 shadow-sm rounded-t-sm">
                     <h1 className="text-[15px] font-bold text-[#162a5b]">User Master</h1>
-                    <Button variant="outline" size="sm" className="h-8 gap-2">
-                        <Shield className="h-4 w-4" /> ROLES & PERMISSIONS
-                    </Button>
+                    <div className="flex gap-3 items-center">
+                        <div className="relative">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+                            <Input
+                                type="text"
+                                placeholder="Search users..."
+                                className="pl-9 h-8 w-[250px] border-gray-200 text-sm focus-visible:ring-[#162a5b] rounded-sm bg-white"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                        </div>
+                        <Button variant="outline" size="sm" className="h-8 gap-2">
+                            <Shield className="h-4 w-4" /> ROLES & PERMISSIONS
+                        </Button>
+                    </div>
                 </div>
 
                 <div className="bg-white border border-t-0 shadow-sm p-8 rounded-b-sm">

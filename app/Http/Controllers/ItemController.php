@@ -6,7 +6,6 @@ use App\Models\Item;
 use App\Models\ItemCategory;
 use App\Models\ItemSubCategory;
 use App\Models\ItemType;
-use App\Models\Brand;
 use App\Models\Uom;
 use App\Models\UomConversion;
 use Illuminate\Http\Request;
@@ -27,7 +26,6 @@ class ItemController extends Controller
             'categories' => ItemCategory::all(),
             'subCategories' => ItemSubCategory::all(),
             'itemTypes' => ItemType::all(),
-            'brands' => Brand::all(),
             'uoms' => Uom::all(),
         ]);
     }
@@ -38,7 +36,6 @@ class ItemController extends Controller
             'item_name' => 'required|string|max:255',
             'item_category_id' => 'nullable|exists:item_categories,id',
             'item_sub_category_id' => 'nullable|exists:item_sub_categories,id',
-            'brand_id' => 'nullable|exists:brands,id',
             'item_type_id' => 'nullable|exists:item_types,id',
             'item_name_gujarati' => 'nullable|string|max:255',
             'equivalent_selling_item' => 'nullable|string|max:255',
@@ -82,6 +79,12 @@ class ItemController extends Controller
         ]);
 
         DB::transaction(function () use ($validated) {
+            if (!empty($validated['base_unit_id'])) {
+                $uom = Uom::find($validated['base_unit_id']);
+                if ($uom) {
+                    $validated['uom'] = $uom->name;
+                }
+            }
             $item = Item::create($validated);
 
             if (!empty($validated['uom_conversions'])) {
@@ -106,7 +109,6 @@ class ItemController extends Controller
             'item_name' => 'required|string|max:255|unique:items,item_name,' . $item_master->id,
             'item_category_id' => 'required|integer|exists:item_categories,id',
             'item_sub_category_id' => 'nullable|exists:item_sub_categories,id',
-            'brand_id' => 'nullable|exists:brands,id',
             'item_type_id' => 'nullable|exists:item_types,id',
             'item_name_gujarati' => 'nullable|string|max:255',
             'equivalent_selling_item' => 'nullable|string|max:255',
@@ -150,6 +152,12 @@ class ItemController extends Controller
         ]);
 
         DB::transaction(function () use ($validated, $item_master) {
+            if (!empty($validated['base_unit_id'])) {
+                $uom = Uom::find($validated['base_unit_id']);
+                if ($uom) {
+                    $validated['uom'] = $uom->name;
+                }
+            }
             $item_master->update($validated);
 
             $item_master->uomConversions()->delete();

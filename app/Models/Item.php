@@ -49,4 +49,9 @@ class Item extends Model
     {
         return $this->hasMany(UomConversion::class);
     }
+
+    public function itemWarehouseMappings()
+    {
+        return $this->hasMany(ItemWarehouseMapping::class);
+    }
 }

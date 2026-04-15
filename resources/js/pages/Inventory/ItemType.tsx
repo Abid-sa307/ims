@@ -7,11 +7,11 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PlusCircle, Pencil, Trash2, Save, X, Box } from 'lucide-react';
+import { PlusCircle, Pencil, Trash2, Save, X, Box, Search } from 'lucide-react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Inventory', href: '#' },
-    { title: 'Item Type', href: '/inventory/item-type' },
+    { title: 'Item Type', href: '/inventory/item-types' },
 ];
 
 interface ItemType {
@@ -21,6 +21,7 @@ interface ItemType {
 
 export default function ItemTypePage({ types = [] }: { types: ItemType[] }) {
     const [viewMode, setViewMode] = useState<'list' | 'form'>('list');
+    const [searchQuery, setSearchQuery] = useState('');
     const [isEditing, setIsEditing] = useState(false);
 
     const { data, setData, post, put, delete: destroy, processing, errors, reset, clearErrors } = useForm({
@@ -43,7 +44,7 @@ export default function ItemTypePage({ types = [] }: { types: ItemType[] }) {
 
     const handleDelete = (id: number) => {
         if (confirm('Are you sure you want to delete this item type?')) {
-            destroy(`/inventory/item-type/${id}`, {
+            destroy(`/inventory/item-types/${id}`, {
                 preserveScroll: true,
             });
         }
@@ -52,14 +53,14 @@ export default function ItemTypePage({ types = [] }: { types: ItemType[] }) {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (isEditing && data.id) {
-            put(`/inventory/item-type/${data.id}`, {
+            put(`/inventory/item-types/${data.id}`, {
                 onSuccess: () => {
                     reset();
                     setViewMode('list');
                 }
             });
         } else {
-            post('/inventory/item-type', {
+            post('/inventory/item-types', {
                 onSuccess: () => {
                     reset();
                     setViewMode('list');
@@ -67,6 +68,12 @@ export default function ItemTypePage({ types = [] }: { types: ItemType[] }) {
             });
         }
     };
+
+    const filteredTypes = types.filter(t => {
+        if (!searchQuery) return true;
+        const lowercaseQuery = searchQuery.toLowerCase();
+        return t.name?.toLowerCase().includes(lowercaseQuery);
+    });
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -78,10 +85,22 @@ export default function ItemTypePage({ types = [] }: { types: ItemType[] }) {
                         <p className="text-sm text-gray-500">Define different types for your inventory items.</p>
                     </div>
                     {viewMode === 'list' && (
-                        <Button onClick={handleCreateNew} className="bg-[#162a5b] hover:bg-[#162a5b]/90 gap-2">
-                            <PlusCircle className="size-4" />
-                            Add Item Type
-                        </Button>
+                        <div className="flex gap-3 items-center">
+                            <div className="relative">
+                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+                                <Input
+                                    type="text"
+                                    placeholder="Search item types..."
+                                    className="pl-9 h-9 w-[250px] border-gray-200 text-sm focus-visible:ring-[#162a5b] rounded-md"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
+                            </div>
+                            <Button onClick={handleCreateNew} className="bg-[#162a5b] hover:bg-[#162a5b]/90 gap-2">
+                                <PlusCircle className="size-4" />
+                                Add Item Type
+                            </Button>
+                        </div>
                     )}
                 </div>
 
@@ -97,7 +116,7 @@ export default function ItemTypePage({ types = [] }: { types: ItemType[] }) {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {types.length > 0 ? types.map((t) => (
+                                    {filteredTypes.length > 0 ? filteredTypes.map((t) => (
                                         <TableRow key={t.id} className="hover:bg-gray-50/50">
                                             <TableCell className="text-gray-500">{t.id}</TableCell>
                                             <TableCell className="font-medium text-[#162a5b]">{t.name}</TableCell>

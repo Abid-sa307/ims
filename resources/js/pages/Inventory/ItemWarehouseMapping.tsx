@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { PlusCircle, Pencil, Trash2, Save, X, Warehouse as WarehouseIcon, Link2 } from 'lucide-react';
+import { PlusCircle, Pencil, Trash2, Save, X, Warehouse as WarehouseIcon, Link2, Search } from 'lucide-react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Inventory', href: '#' },
@@ -29,6 +29,7 @@ interface Mapping {
 
 export default function ItemWarehouseMapping({ mappings = [], locations = [], warehouses = [], categories = [], items = [] }: any) {
     const [viewMode, setViewMode] = useState<'list' | 'form'>('list');
+    const [searchQuery, setSearchQuery] = useState('');
     const [isEditing, setIsEditing] = useState(false);
 
     const { data, setData, post, put, delete: destroy, processing, errors, reset, clearErrors } = useForm({
@@ -73,6 +74,15 @@ export default function ItemWarehouseMapping({ mappings = [], locations = [], wa
         }
     };
 
+    const filteredMappings = mappings.filter((m: Mapping) => {
+        if (!searchQuery) return true;
+        const lowercaseQuery = searchQuery.toLowerCase();
+        return (m.location?.location_legal_name?.toLowerCase().includes(lowercaseQuery) || 
+               m.warehouse?.name?.toLowerCase().includes(lowercaseQuery) ||
+               m.category?.name?.toLowerCase().includes(lowercaseQuery) ||
+               m.item?.item_name?.toLowerCase().includes(lowercaseQuery));
+    });
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Item Warehouse Mapping" />
@@ -83,10 +93,22 @@ export default function ItemWarehouseMapping({ mappings = [], locations = [], wa
                         <p className="text-sm text-gray-500">Map items to specific warehouses for stock management.</p>
                     </div>
                     {viewMode === 'list' && (
-                        <Button onClick={handleCreateNew} className="bg-[#162a5b] hover:bg-[#162a5b]/90 gap-2">
-                            <PlusCircle className="size-4" />
-                            Add Mapping
-                        </Button>
+                        <div className="flex gap-3 items-center">
+                            <div className="relative">
+                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+                                <Input
+                                    type="text"
+                                    placeholder="Search mappings..."
+                                    className="pl-9 h-9 w-[250px] border-gray-200 text-sm focus-visible:ring-[#162a5b] rounded-md"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
+                            </div>
+                            <Button onClick={handleCreateNew} className="bg-[#162a5b] hover:bg-[#162a5b]/90 gap-2">
+                                <PlusCircle className="size-4" />
+                                Add Mapping
+                            </Button>
+                        </div>
                     )}
                 </div>
 
@@ -104,7 +126,7 @@ export default function ItemWarehouseMapping({ mappings = [], locations = [], wa
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {mappings.length > 0 ? mappings.map((m: Mapping) => (
+                                    {filteredMappings.length > 0 ? filteredMappings.map((m: Mapping) => (
                                         <TableRow key={m.id} className="hover:bg-gray-50/50">
                                             <TableCell className="text-gray-900">{m.location?.location_legal_name}</TableCell>
                                             <TableCell className="text-[#162a5b] font-bold">{m.warehouse?.name}</TableCell>

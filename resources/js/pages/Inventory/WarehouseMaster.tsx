@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { PlusCircle, Pencil, Trash2, Save, X, Warehouse as WarehouseIcon } from 'lucide-react';
+import { PlusCircle, Pencil, Trash2, Save, X, Warehouse as WarehouseIcon, Search } from 'lucide-react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Inventory', href: '#' },
@@ -29,6 +29,7 @@ interface Warehouse {
 
 export default function WarehouseMaster({ warehouses = [], locations = [] }: { warehouses: Warehouse[], locations: Location[] }) {
     const [viewMode, setViewMode] = useState<'list' | 'form'>('list');
+    const [searchQuery, setSearchQuery] = useState('');
     const [isEditing, setIsEditing] = useState(false);
 
     const { data, setData, post, put, delete: destroy, processing, errors, reset, clearErrors } = useForm({
@@ -81,6 +82,13 @@ export default function WarehouseMaster({ warehouses = [], locations = [] }: { w
         }
     };
 
+    const filteredWarehouses = warehouses.filter(wh => {
+        if (!searchQuery) return true;
+        const lowercaseQuery = searchQuery.toLowerCase();
+        return (wh.name?.toLowerCase().includes(lowercaseQuery) || 
+               wh.location?.location_legal_name?.toLowerCase().includes(lowercaseQuery));
+    });
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Warehouse Master" />
@@ -91,10 +99,22 @@ export default function WarehouseMaster({ warehouses = [], locations = [] }: { w
                         <p className="text-sm text-gray-500">Manage warehouses and link them to operating locations.</p>
                     </div>
                     {viewMode === 'list' && (
-                        <Button onClick={handleCreateNew} className="bg-[#162a5b] hover:bg-[#162a5b]/90 gap-2">
-                            <PlusCircle className="size-4" />
-                            Add Warehouse
-                        </Button>
+                        <div className="flex gap-3 items-center">
+                            <div className="relative">
+                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+                                <Input
+                                    type="text"
+                                    placeholder="Search warehouses..."
+                                    className="pl-9 h-9 w-[250px] border-gray-200 text-sm focus-visible:ring-[#162a5b] rounded-md"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
+                            </div>
+                            <Button onClick={handleCreateNew} className="bg-[#162a5b] hover:bg-[#162a5b]/90 gap-2">
+                                <PlusCircle className="size-4" />
+                                Add Warehouse
+                            </Button>
+                        </div>
                     )}
                 </div>
 
@@ -111,7 +131,7 @@ export default function WarehouseMaster({ warehouses = [], locations = [] }: { w
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {warehouses.length > 0 ? warehouses.map((wh) => (
+                                    {filteredWarehouses.length > 0 ? filteredWarehouses.map((wh) => (
                                         <TableRow key={wh.id} className="hover:bg-gray-50/50">
                                             <TableCell className="text-gray-500">{wh.id}</TableCell>
                                             <TableCell className="text-gray-600 font-medium">{wh.location?.location_legal_name || 'N/A'}</TableCell>

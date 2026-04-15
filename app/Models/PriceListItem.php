@@ -10,6 +10,7 @@ class PriceListItem extends Model
         'price_list_id',
         'item_id',
         'selling_price',
+        'discount',
         'tax_percent',
         'uom',
     ];

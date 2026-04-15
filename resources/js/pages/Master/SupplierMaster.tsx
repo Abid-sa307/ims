@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { List, Image as ImageIcon, Plus, Trash2, Edit } from 'lucide-react';
+import { List, Image as ImageIcon, Plus, Trash2, Edit, Search } from 'lucide-react';
 import { useState, useRef } from 'react';
 
 // Define the Supplier type
@@ -66,6 +66,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 export default function SupplierMaster({ suppliers = [], locations = [] }: Props) {
     const [showList, setShowList] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
     const [editingId, setEditingId] = useState<number | null>(null);
     const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -191,6 +192,15 @@ export default function SupplierMaster({ suppliers = [], locations = [] }: Props
         }
     };
 
+    const filteredSuppliers = suppliers.filter(supplier => {
+        if (!searchQuery) return true;
+        const lowercaseQuery = searchQuery.toLowerCase();
+        return (supplier.supplier_name?.toLowerCase().includes(lowercaseQuery) || 
+               supplier.city?.toLowerCase().includes(lowercaseQuery) || 
+               supplier.contact_number?.toLowerCase().includes(lowercaseQuery) || 
+               supplier.email?.toLowerCase().includes(lowercaseQuery));
+    });
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Supplier Master" />
@@ -198,18 +208,32 @@ export default function SupplierMaster({ suppliers = [], locations = [] }: Props
 
                 <div className="flex items-center justify-between border-b pb-4 mb-6 border-t-2 border-t-[#162a5b] bg-white p-4 shadow-sm rounded-t-sm">
                     <h1 className="text-[15px] font-bold text-[#162a5b]">Supplier Master</h1>
-                    <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="h-8 gap-2"
-                        onClick={() => setShowList(!showList)}
-                    >
-                        {showList ? (
-                            <><Plus className="h-4 w-4" /> ADD NEW</>
-                        ) : (
-                            <><List className="h-4 w-4" /> VIEW LIST</>
+                    <div className="flex gap-3 items-center">
+                        {showList && (
+                            <div className="relative">
+                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+                                <Input
+                                    type="text"
+                                    placeholder="Search suppliers..."
+                                    className="pl-9 h-8 w-[250px] border-gray-200 text-sm focus-visible:ring-[#162a5b] rounded-sm"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
+                            </div>
                         )}
-                    </Button>
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-8 gap-2"
+                            onClick={() => setShowList(!showList)}
+                        >
+                            {showList ? (
+                                <><Plus className="h-4 w-4" /> ADD NEW</>
+                            ) : (
+                                <><List className="h-4 w-4" /> VIEW LIST</>
+                            )}
+                        </Button>
+                    </div>
                 </div>
 
                 {!showList ? (
@@ -461,8 +485,8 @@ export default function SupplierMaster({ suppliers = [], locations = [] }: Props
                                 </tr>
                             </thead>
                             <tbody>
-                                {suppliers.length > 0 ? (
-                                    suppliers.map((supplier) => (
+                                {filteredSuppliers.length > 0 ? (
+                                    filteredSuppliers.map((supplier) => (
                                         <tr key={supplier.id} className="border-b hover:bg-gray-50/50">
                                             <td className="px-6 py-4 font-medium">{supplier.supplier_name}</td>
                                             <td className="px-6 py-4">{supplier.city || '-'}</td>

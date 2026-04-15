@@ -28,10 +28,10 @@ class ReportController extends Controller
         $query = PurchaseOrder::with(['supplier', 'location']);
 
         if ($request->filled('date_from')) {
-            $query->where('order_date', '>=', $request->date_from);
+            $query->where('po_date', '>=', $request->date_from);
         }
         if ($request->filled('date_to')) {
-            $query->where('order_date', '<=', $request->date_to);
+            $query->where('po_date', '<=', $request->date_to);
         }
         if ($request->filled('location_id')) {
             $query->where('location_id', $request->location_id);
@@ -64,10 +64,10 @@ class ReportController extends Controller
             ->groupBy('items.hsn_code');
 
         if ($request->filled('date_from')) {
-            $query->where('purchase_orders.order_date', '>=', $request->date_from);
+            $query->where('purchase_orders.po_date', '>=', $request->date_from);
         }
         if ($request->filled('date_to')) {
-            $query->where('purchase_orders.order_date', '<=', $request->date_to);
+            $query->where('purchase_orders.po_date', '<=', $request->date_to);
         }
 
         return Inertia::render('Reports/Purchase/HSNSummary', [
@@ -85,10 +85,10 @@ class ReportController extends Controller
             $query->where('purchase_order_items.item_id', $request->item_id);
         }
         if ($request->filled('date_from')) {
-            $query->where('purchase_orders.order_date', '>=', $request->date_from);
+            $query->where('purchase_orders.po_date', '>=', $request->date_from);
         }
         if ($request->filled('date_to')) {
-            $query->where('purchase_orders.order_date', '<=', $request->date_to);
+            $query->where('purchase_orders.po_date', '<=', $request->date_to);
         }
         if ($request->filled('supplier_id')) {
             $query->where('purchase_orders.supplier_id', $request->supplier_id);
@@ -126,18 +126,18 @@ class ReportController extends Controller
             ->join('purchase_orders', 'purchase_order_items.purchase_order_id', '=', 'purchase_orders.id')
             ->select(
                 'items.item_name',
-                DB::raw('MIN(purchase_order_items.unit_price) as min_price'),
-                DB::raw('MAX(purchase_order_items.unit_price) as max_price'),
-                DB::raw('AVG(purchase_order_items.unit_price) as avg_price'),
+                DB::raw('MIN(purchase_order_items.current_price) as min_price'),
+                DB::raw('MAX(purchase_order_items.current_price) as max_price'),
+                DB::raw('AVG(purchase_order_items.current_price) as avg_price'),
                 DB::raw('COUNT(*) as purchase_count')
             )
             ->groupBy('items.id', 'items.item_name');
 
         if ($request->filled('date_from')) {
-            $query->where('purchase_orders.order_date', '>=', $request->date_from);
+            $query->where('purchase_orders.po_date', '>=', $request->date_from);
         }
         if ($request->filled('date_to')) {
-            $query->where('purchase_orders.order_date', '<=', $request->date_to);
+            $query->where('purchase_orders.po_date', '<=', $request->date_to);
         }
 
         return Inertia::render('Reports/Purchase/PriceDeviation', [

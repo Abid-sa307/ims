@@ -47,10 +47,6 @@ const mainNavItems: NavItem[] = [
                 href: '/inventory/item-types',
             },
             {
-                title: 'Items',
-                href: '/inventory/items',
-            },
-            {
                 title: 'Price Policy',
                 href: '/inventory/price-lists',
             },
@@ -63,8 +59,16 @@ const mainNavItems: NavItem[] = [
                 href: '/inventory/warehouse-master',
             },
             {
+                title: 'Transporter Master',
+                href: '/inventory/transporter-master',
+            },
+            {
                 title: 'Item Supplier Master',
                 href: '/inventory/item-supplier-mapping',
+            },
+            {
+                title: 'Stock Source Selection',
+                href: '/inventory/stock-source-selection',
             },
             {
                 title: 'Item Warehouse Mapping',
@@ -80,6 +84,21 @@ const mainNavItems: NavItem[] = [
             {
                 title: 'Location Master',
                 href: '/master/location-master',
+            },
+        ],
+    },
+    {
+        title: 'Tax',
+        href: '#',
+        icon: FileText,
+        items: [
+            {
+                title: 'Tax List',
+                href: '/config/tax-master',
+            },
+            {
+                title: 'Create Tax',
+                href: '/config/tax-master/create',
             },
         ],
     },
@@ -244,13 +263,58 @@ const mainNavItems: NavItem[] = [
     },
     {
         title: 'Payment Management',
-        href: '/operations/payment-management',
+        href: '#',
         icon: DollarSign,
+        items: [
+            {
+                title: 'Payment Management',
+                href: '/operations/payment-management',
+            },
+            {
+                title: 'Payment Details',
+                href: '/operations/payment-details',
+            },
+            {
+                title: 'Bulk Payment',
+                href: '/operations/bulk-payment',
+            },
+            {
+                title: 'Payment Transaction Report',
+                href: '/operations/payment-transaction-report',
+            },
+        ],
     },
     {
         title: 'Central kitchen register',
         href: '/operations/kitchen-register',
         icon: ClipboardList,
+    },
+    {
+        title: 'New Reports Added',
+        href: '#',
+        icon: FileBarChart,
+        items: [
+            {
+                title: 'Supplier Payment',
+                href: '/reports/new/supplier-payment',
+            },
+            {
+                title: 'Supplier Payment Entry',
+                href: '/reports/new/supplier-payment-entry',
+            },
+            {
+                title: 'Price Deviation',
+                href: '/reports/new/price-deviation',
+            },
+            {
+                title: 'Creditors Report',
+                href: '/reports/new/creditors-report',
+            },
+            {
+                title: 'Supplier Account',
+                href: '/reports/new/supplier-account',
+            },
+        ],
     },
     {
         title: 'Sales Reports',

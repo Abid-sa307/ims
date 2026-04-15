@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { MapPin, Save, X, PlusCircle, Pencil, Trash2, Navigation, Plus, Minus, Building2, Mail, Phone, FileText, Settings2, Lock } from 'lucide-react';
+import { MapPin, Save, X, PlusCircle, Pencil, Trash2, Navigation, Plus, Minus, Building2, Mail, Phone, FileText, Settings2, Lock, Search } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -67,6 +67,7 @@ function Field({ label, required, error, children }: { label: string; required?:
 
 export default function LocationMaster({ locations = [], suppliers = [] }: { locations: Location[]; suppliers: Supplier[] }) {
     const [viewMode, setViewMode] = useState<'list' | 'form'>('list');
+    const [searchQuery, setSearchQuery] = useState('');
     const [isEditing, setIsEditing] = useState(false);
     const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
     const [ccEmailInput, setCcEmailInput] = useState('');
@@ -167,6 +168,15 @@ export default function LocationMaster({ locations = [], suppliers = [] }: { loc
     const isCustomer = data.location_type === 'Customer';
     const isHQ = data.location_type === 'HQ';
 
+    const filteredLocations = locations.filter(loc => {
+        if (!searchQuery) return true;
+        const lowercaseQuery = searchQuery.toLowerCase();
+        return (loc.location_legal_name?.toLowerCase().includes(lowercaseQuery) || 
+               loc.city?.toLowerCase().includes(lowercaseQuery) || 
+               loc.contact_number?.toLowerCase().includes(lowercaseQuery) || 
+               loc.location_type?.toLowerCase().includes(lowercaseQuery));
+    });
+
     // ─── LIST VIEW ────────────────────────────────────────────
     if (viewMode === 'list') {
         return (
@@ -205,8 +215,18 @@ export default function LocationMaster({ locations = [], suppliers = [] }: { loc
 
                     {/* Table */}
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                        <div className="px-6 py-4 border-b border-gray-50 bg-gray-50/50">
+                        <div className="px-6 py-4 border-b border-gray-50 bg-gray-50/50 flex justify-between items-center">
                             <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">All Locations</p>
+                            <div className="relative">
+                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+                                <Input
+                                    type="text"
+                                    placeholder="Search locations..."
+                                    className="pl-9 h-8 w-[250px] border-gray-200 text-sm focus-visible:ring-[#162a5b] rounded-sm bg-white"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
+                            </div>
                         </div>
                         <Table>
                             <TableHeader>
@@ -219,7 +239,7 @@ export default function LocationMaster({ locations = [], suppliers = [] }: { loc
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {locations.length > 0 ? locations.map((loc) => (
+                                {filteredLocations.length > 0 ? filteredLocations.map((loc) => (
                                     <TableRow key={loc.id} className="hover:bg-blue-50/30 transition-colors border-b border-gray-50">
                                         <TableCell>
                                             <div className="flex items-center gap-2">
