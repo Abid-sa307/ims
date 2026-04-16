@@ -101,8 +101,7 @@
     "extra": {
         "laravel": {
             "dont-discover": [
-                "laravel/boost",
-                "laravel/wayfinder"
+                "laravel/boost"
             ]
         }
     },

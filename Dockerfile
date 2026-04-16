@@ -29,6 +29,7 @@ RUN php -m
 ENV DB_CONNECTION=sqlite
 ENV DB_DATABASE=:memory:
 ENV APP_KEY=base64:Zi682yEnRfxnCo4oj2i33AQAu66bYMTHcgd0Dqtd7RY=
+ENV SKIP_WAYFINDER=true
 RUN npm install && npm run build
 
 # Stage 2: Production Server
