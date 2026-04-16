@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { List, FileUp, Plus, Trash2, Edit, Save, X, LayoutGrid, Search } from 'lucide-react';
+import { List, FileUp, FileDown, Plus, Trash2, Edit, Save, X, LayoutGrid, Search } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
@@ -143,10 +143,31 @@ export default function ItemMaster({
         }
     }, [data.item_sub_category_id]);
 
+    useEffect(() => {
+        // Automatically add first conversion row when base unit is selected and no conversions exist
+        if (data.base_unit_id && data.uom_conversions.length === 0) {
+            setData('uom_conversions', [
+                { 
+                    target_uom_id: String(data.base_unit_id), 
+                    is_default: true,
+                    uom_multiplier: 1, 
+                    quantity_multiplier: 1, 
+                    min_order_quantity: 1 
+                }
+            ]);
+        }
+    }, [data.base_unit_id]);
+
     const addUomConversion = () => {
         setData('uom_conversions', [
             ...data.uom_conversions,
-            { target_uom_id: '', uom_multiplier: 1, quantity_multiplier: 1, min_order_quantity: 0 }
+            { 
+                target_uom_id: String(data.base_unit_id || ''), 
+                is_default: data.uom_conversions.length === 0, // Default to true for the first row
+                uom_multiplier: 1, 
+                quantity_multiplier: 1, 
+                min_order_quantity: 1 
+            }
         ]);
     };
 
@@ -258,10 +279,19 @@ export default function ItemMaster({
                         />
                         <Button 
                             variant="outline" 
-                            className="bg-white border-slate-200 hover:bg-slate-50 text-slate-700"
+                            className="bg-white border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold"
                             onClick={handleImportButtonClick}
                         >
                             <FileUp className="mr-2 h-4 w-4" /> Import Excel
+                        </Button>
+                        <Button 
+                            variant="outline" 
+                            className="bg-white border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold"
+                            asChild
+                        >
+                            <a href="/ItemMaster_Import_Format.xlsx" download>
+                                <FileDown className="mr-2 h-4 w-4" /> Download Format
+                            </a>
                         </Button>
                         <Button 
                             variant="outline" 
@@ -395,7 +425,7 @@ export default function ItemMaster({
                                         <Select value={data.base_unit_id} onValueChange={v => setData('base_unit_id', v)}>
                                             <SelectTrigger><SelectValue placeholder="-- Please Select --" /></SelectTrigger>
                                             <SelectContent>
-                                                {uoms.map(u => <SelectItem key={u.id} value={String(u.id)}>{u.name}</SelectItem>)}
+                                                {uoms.map(u => <SelectItem key={u.id} value={String(u.id)}>{u.uom_code}</SelectItem>)}
                                             </SelectContent>
                                         </Select>
                                     </div>
@@ -407,7 +437,14 @@ export default function ItemMaster({
                         <Card className="border-slate-200 shadow-sm overflow-hidden">
                             <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-4 flex flex-row items-center justify-between">
                                 <CardTitle className="text-lg font-semibold text-slate-800">UOM Conversation</CardTitle>
-                                <Button type="button" variant="outline" size="sm" onClick={addUomConversion} className="h-8 bg-white">
+                                <Button 
+                                    type="button" 
+                                    variant="outline" 
+                                    size="sm" 
+                                    onClick={addUomConversion} 
+                                    className="h-8 bg-white"
+                                    disabled={!data.base_unit_id}
+                                >
                                     <Plus className="mr-2 h-3 w-3" /> Add Conversion
                                 </Button>
                             </CardHeader>
@@ -415,36 +452,60 @@ export default function ItemMaster({
                                 <Table>
                                     <TableHeader className="bg-slate-50/30">
                                         <TableRow>
+                                            <TableHead className="text-slate-600 w-24 text-center">Default</TableHead>
+                                            <TableHead className="text-slate-600">Base Unit</TableHead>
                                             <TableHead className="text-slate-600">UOM</TableHead>
-                                            <TableHead className="text-slate-600">UOM Multiplier</TableHead>
-                                            <TableHead className="text-slate-600">Quantity Multiplier</TableHead>
-                                            <TableHead className="text-slate-600">Min. Order Qty</TableHead>
+                                            <TableHead className="text-slate-600">Multiplier</TableHead>
+                                            <TableHead className="text-slate-600">Qty Multiplier</TableHead>
+                                            <TableHead className="text-slate-600">Min Order Qty</TableHead>
                                             <TableHead className="w-12"></TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {data.uom_conversions.length > 0 ? (
                                             data.uom_conversions.map((conv, index) => (
-                                                <TableRow key={index}>
+                                                <TableRow key={index} className="hover:bg-slate-50/30 transition-colors">
+                                                    <TableCell className="p-2 text-center">
+                                                        <div className="flex justify-center">
+                                                            <input 
+                                                                type="checkbox"
+                                                                className="size-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50"
+                                                                checked={index === 0 ? true : conv.is_default}
+                                                                disabled={index === 0}
+                                                                onChange={(e) => {
+                                                                    const newConversions = data.uom_conversions.map((c, i) => ({
+                                                                        ...c,
+                                                                        is_default: i === index ? e.target.checked : (i === 0 ? true : false)
+                                                                    }));
+                                                                    setData('uom_conversions', newConversions);
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell className="p-2">
+                                                        <div className="h-9 px-3 flex items-center bg-slate-100 rounded-md border border-slate-200 text-slate-500 text-sm font-bold">
+                                                            {uoms.find(u => String(u.id) === String(data.base_unit_id))?.uom_code || '---'}
+                                                        </div>
+                                                    </TableCell>
                                                     <TableCell className="p-2">
                                                         <Select value={conv.target_uom_id} onValueChange={v => updateUomConversion(index, 'target_uom_id', v)}>
-                                                            <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                                                            <SelectTrigger className="h-9 border-slate-200 focus:ring-2 focus:ring-indigo-500/20"><SelectValue /></SelectTrigger>
                                                             <SelectContent>
-                                                                {uoms.map(u => <SelectItem key={u.id} value={String(u.id)}>{u.name}</SelectItem>)}
+                                                                {uoms.map(u => <SelectItem key={u.id} value={String(u.id)}>{u.uom_code}</SelectItem>)}
                                                             </SelectContent>
                                                         </Select>
                                                     </TableCell>
                                                     <TableCell className="p-2">
-                                                        <Input type="number" className="h-9" value={conv.uom_multiplier} onChange={e => updateUomConversion(index, 'uom_multiplier', parseFloat(e.target.value))} />
+                                                        <Input type="number" className="h-9 border-slate-200" value={conv.uom_multiplier} onChange={e => updateUomConversion(index, 'uom_multiplier', parseFloat(e.target.value))} />
                                                     </TableCell>
                                                     <TableCell className="p-2">
-                                                        <Input type="number" className="h-9" value={conv.quantity_multiplier} onChange={e => updateUomConversion(index, 'quantity_multiplier', parseFloat(e.target.value))} />
+                                                        <Input type="number" className="h-9 border-slate-200" value={conv.quantity_multiplier} onChange={e => updateUomConversion(index, 'quantity_multiplier', parseFloat(e.target.value))} />
                                                     </TableCell>
                                                     <TableCell className="p-2">
-                                                        <Input type="number" className="h-9" value={conv.min_order_quantity} onChange={e => updateUomConversion(index, 'min_order_quantity', parseFloat(e.target.value))} />
+                                                        <Input type="number" className="h-9 border-slate-200" value={conv.min_order_quantity} onChange={e => updateUomConversion(index, 'min_order_quantity', parseFloat(e.target.value))} />
                                                     </TableCell>
                                                     <TableCell className="p-2">
-                                                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-red-400 hover:text-red-600" onClick={() => removeUomConversion(index)}>
+                                                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-slate-300 hover:text-red-600 transition-colors" onClick={() => removeUomConversion(index)}>
                                                             <Trash2 className="h-4 w-4" />
                                                         </Button>
                                                     </TableCell>
@@ -452,8 +513,8 @@ export default function ItemMaster({
                                             ))
                                         ) : (
                                             <TableRow>
-                                                <TableCell colSpan={5} className="h-20 text-center text-slate-400 italic">
-                                                    Please Select Base Unit To Add UOM Conversation
+                                                <TableCell colSpan={7} className="h-24 text-center text-slate-400 italic bg-slate-50/20">
+                                                    {data.base_unit_id ? "Click '+ Add Conversion' to define unit ratios" : "Please Select a Base Unit first to define conversions"}
                                                 </TableCell>
                                             </TableRow>
                                         )}

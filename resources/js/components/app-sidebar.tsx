@@ -97,8 +97,8 @@ const mainNavItems: NavItem[] = [
                 href: '/config/tax-master',
             },
             {
-                title: 'Create Tax',
-                href: '/config/tax-master/create',
+                title: 'Tax Profile',
+                href: '/config/tax-profiles',
             },
         ],
     },

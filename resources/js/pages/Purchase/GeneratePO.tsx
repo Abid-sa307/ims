@@ -110,7 +110,7 @@ export default function GeneratePO() {
             const selectedItem = items.find((i: any) => i.id.toString() === value.toString());
             if (selectedItem) {
                 newItems[index].current_price = selectedItem.price;
-                newItems[index].uom = selectedItem.uom;
+                newItems[index].uom = selectedItem.base_unit?.uom_code || selectedItem.uom;
                 newItems[index].tax_percent = selectedItem.tax_percent;
                 newItems[index].cess_percent = selectedItem.cess_percent;
             }

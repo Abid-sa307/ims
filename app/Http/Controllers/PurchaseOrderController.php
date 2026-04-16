@@ -20,7 +20,7 @@ class PurchaseOrderController extends Controller
         return Inertia::render('Purchase/GeneratePO', [
             'locations' => Location::all(),
             'suppliers' => Supplier::all(),
-            'items' => Item::all()
+            'items' => Item::with('baseUnit')->get()
         ]);
     }
 
@@ -216,15 +216,35 @@ class PurchaseOrderController extends Controller
         $query = PurchaseOrder::with(['supplier', 'location'])->latest();
 
         if ($request->filled('search')) {
-            $query->where('order_number', 'like', '%' . $request->search . '%')
-                  ->orWhereHas('supplier', function($q) use ($request) {
-                      $q->where('supplier_name', 'like', '%' . $request->search . '%');
+            $query->where(function($q) use ($request) {
+                $q->where('order_number', 'like', '%' . $request->search . '%')
+                  ->orWhereHas('supplier', function($sq) use ($request) {
+                      $sq->where('supplier_name', 'like', '%' . $request->search . '%');
                   });
+            });
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('po_date', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('po_date', '<=', $request->date_to);
+        }
+        if ($request->filled('location_id')) {
+            $query->where('location_id', $request->location_id);
+        }
+        if ($request->filled('supplier_id')) {
+            $query->where('supplier_id', $request->supplier_id);
+        }
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
         }
 
         return Inertia::render('Purchase/Summary', [
             'purchaseOrders' => $query->paginate(15)->withQueryString(),
-            'filters' => $request->only(['search'])
+            'locations' => Location::all(),
+            'suppliers' => Supplier::all(),
+            'filters' => $request->only(['search', 'date_from', 'date_to', 'location_id', 'supplier_id', 'status'])
         ]);
     }
 }

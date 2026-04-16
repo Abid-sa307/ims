@@ -16,6 +16,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 interface Uom {
     id: number;
+    uom_code: string;
     name: string;
 }
 
@@ -26,6 +27,7 @@ export default function UomMaster({ uoms = [] }: { uoms: Uom[] }) {
 
     const { data, setData, post, put, delete: destroy, processing, errors, reset, clearErrors } = useForm({
         id: null as number | null,
+        uom_code: '',
         name: '',
     });
 
@@ -37,7 +39,7 @@ export default function UomMaster({ uoms = [] }: { uoms: Uom[] }) {
     };
 
     const handleEdit = (uom: Uom) => {
-        setData({ id: uom.id, name: uom.name });
+        setData({ id: uom.id, uom_code: uom.uom_code || '', name: uom.name });
         setIsEditing(true);
         setViewMode('form');
     };
@@ -72,7 +74,8 @@ export default function UomMaster({ uoms = [] }: { uoms: Uom[] }) {
     const filteredUoms = uoms.filter(uom => {
         if (!searchQuery) return true;
         const lowercaseQuery = searchQuery.toLowerCase();
-        return uom.name?.toLowerCase().includes(lowercaseQuery);
+        return uom.name?.toLowerCase().includes(lowercaseQuery) || 
+               uom.uom_code?.toLowerCase().includes(lowercaseQuery);
     });
 
     return (
@@ -81,7 +84,7 @@ export default function UomMaster({ uoms = [] }: { uoms: Uom[] }) {
             <div className="flex flex-col gap-6 p-6">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-xl font-bold tracking-tight text-gray-900">UOM Master</h1>
+                        <h1 className="text-xl font-bold tracking-tight text-[#162a5b]">UOM Master</h1>
                         <p className="text-sm text-gray-500">Manage Unit of Measures (UOM) for inventory items.</p>
                     </div>
                     {viewMode === 'list' && (
@@ -96,43 +99,45 @@ export default function UomMaster({ uoms = [] }: { uoms: Uom[] }) {
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                 />
                             </div>
-                            <Button onClick={handleCreateNew} className="bg-[#162a5b] hover:bg-[#162a5b]/90 gap-2">
+                            <Button onClick={handleCreateNew} className="bg-[#162a5b] hover:bg-[#162a5b]/90 gap-2 font-bold h-9">
                                 <PlusCircle className="size-4" />
-                                Add UOM
+                                ADD UOM
                             </Button>
                         </div>
                     )}
                 </div>
 
                 {viewMode === 'list' ? (
-                    <Card className="border-gray-100 shadow-sm">
+                    <Card className="border-gray-100 shadow-sm rounded-xl overflow-hidden">
                         <CardContent className="p-0">
                             <Table>
                                 <TableHeader className="bg-gray-50/50">
                                     <TableRow>
-                                        <TableHead className="font-semibold text-gray-900 w-[100px]">ID</TableHead>
-                                        <TableHead className="font-semibold text-gray-900">UOM Name</TableHead>
-                                        <TableHead className="font-semibold text-gray-900 text-right">Actions</TableHead>
+                                        <TableHead className="font-bold text-gray-900 w-[100px] px-6">ID</TableHead>
+                                        <TableHead className="font-bold text-gray-900 px-6">UOM Code</TableHead>
+                                        <TableHead className="font-bold text-gray-900 px-6">Full Name</TableHead>
+                                        <TableHead className="font-bold text-gray-900 text-right px-6">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {filteredUoms.length > 0 ? filteredUoms.map((uom) => (
-                                        <TableRow key={uom.id} className="hover:bg-gray-50/50">
-                                            <TableCell className="text-gray-500">{uom.id}</TableCell>
-                                            <TableCell className="font-medium text-[#162a5b]">{uom.name}</TableCell>
-                                            <TableCell className="text-right space-x-2">
-                                                <Button size="icon" variant="ghost" onClick={() => handleEdit(uom)}>
+                                        <TableRow key={uom.id} className="hover:bg-gray-50/50 transition-colors">
+                                            <TableCell className="text-gray-500 px-6">{uom.id}</TableCell>
+                                            <TableCell className="font-black text-[#162a5b] px-6">{uom.uom_code}</TableCell>
+                                            <TableCell className="font-medium text-gray-700 px-6">{uom.name}</TableCell>
+                                            <TableCell className="text-right space-x-2 px-6">
+                                                <Button size="icon" variant="ghost" onClick={() => handleEdit(uom)} className="h-8 w-8">
                                                     <Pencil className="size-4 text-blue-500" />
                                                 </Button>
-                                                <Button size="icon" variant="ghost" className="text-red-500 hover:text-red-600" onClick={() => handleDelete(uom.id)}>
+                                                <Button size="icon" variant="ghost" className="text-red-500 hover:text-red-600 h-8 w-8" onClick={() => handleDelete(uom.id)}>
                                                     <Trash2 className="size-4" />
                                                 </Button>
                                             </TableCell>
                                         </TableRow>
                                     )) : (
                                         <TableRow>
-                                            <TableCell colSpan={3} className="h-32 text-center text-gray-500">
-                                                No UOMs found.
+                                            <TableCell colSpan={4} className="h-48 text-center text-gray-500 italic font-medium">
+                                                No UOMs found matching your search.
                                             </TableCell>
                                         </TableRow>
                                     )}
@@ -142,32 +147,45 @@ export default function UomMaster({ uoms = [] }: { uoms: Uom[] }) {
                     </Card>
                 ) : (
                     <div className="max-w-2xl">
-                        <Card className="border-gray-100 shadow-sm">
-                            <CardHeader className="bg-gray-50/50 border-b border-gray-100 py-3">
-                                <CardTitle className="text-sm font-semibold text-gray-800 flex items-center gap-2">
-                                    <Ruler className="size-4" />
-                                    {isEditing ? 'Edit UOM' : 'New UOM'}
+                        <Card className="border-gray-100 shadow-sm rounded-xl overflow-hidden">
+                            <CardHeader className="bg-gray-50/50 border-b border-gray-100 py-4">
+                                <CardTitle className="text-lg font-bold text-[#162a5b] flex items-center gap-2">
+                                    <Ruler className="size-5" />
+                                    {isEditing ? 'Edit UOM' : 'Create New UOM'}
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="p-6">
-                                <form onSubmit={handleSubmit} className="space-y-4">
-                                    <div className="space-y-1.5">
-                                        <Label htmlFor="name">UOM Name</Label>
-                                        <Input
-                                            id="name"
-                                            value={data.name}
-                                            onChange={e => setData('name', e.target.value)}
-                                            placeholder="e.g. KG, LTR, PCS"
-                                            className={errors.name ? 'border-red-500' : ''}
-                                        />
-                                        {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
+                            <CardContent className="p-8">
+                                <form onSubmit={handleSubmit} className="space-y-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="uom_code" className="font-bold text-gray-700">UOM Code</Label>
+                                            <Input
+                                                id="uom_code"
+                                                value={data.uom_code}
+                                                onChange={e => setData('uom_code', e.target.value.toUpperCase())}
+                                                placeholder="e.g. KGS"
+                                                className={`h-11 ${errors.uom_code ? 'border-red-500' : 'border-gray-200'} focus:ring-[#162a5b] rounded-lg uppercase font-bold`}
+                                            />
+                                            {errors.uom_code && <p className="text-xs text-red-500 font-bold">{errors.uom_code}</p>}
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="name" className="font-bold text-gray-700">Full Name</Label>
+                                            <Input
+                                                id="name"
+                                                value={data.name}
+                                                onChange={e => setData('name', e.target.value)}
+                                                placeholder="e.g. KILOGRAMS"
+                                                className={`h-11 ${errors.name ? 'border-red-500' : 'border-gray-200'} focus:ring-[#162a5b] rounded-lg`}
+                                            />
+                                            {errors.name && <p className="text-xs text-red-500 font-bold">{errors.name}</p>}
+                                        </div>
                                     </div>
-                                    <div className="flex justify-end gap-3 pt-4">
-                                        <Button variant="outline" type="button" onClick={() => setViewMode('list')} className="text-gray-500 border-gray-200">
-                                            <X className="w-4 h-4 mr-1"/> Cancel
+                                    <div className="flex justify-end gap-3 pt-6 border-t mt-4">
+                                        <Button variant="outline" type="button" onClick={() => setViewMode('list')} className="px-6 h-11 text-gray-500 border-gray-200 font-semibold rounded-lg">
+                                            <X className="w-4 h-4 mr-2"/> CANCEL
                                         </Button>
-                                        <Button type="submit" disabled={processing} className="bg-[#162a5b] hover:bg-[#162a5b]/90 text-white">
-                                            {processing ? "Saving..." : <><Save className="w-4 h-4 mr-2"/> Save UOM</>}
+                                        <Button type="submit" disabled={processing} className="bg-[#162a5b] hover:bg-[#1c3a7a] text-white px-8 h-11 font-bold rounded-lg shadow-lg">
+                                            {processing ? "SAVING..." : <><Save className="w-4 h-4 mr-2"/> SAVE UOM</>}
                                         </Button>
                                     </div>
                                 </form>

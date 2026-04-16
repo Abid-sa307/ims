@@ -17,6 +17,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Tax Configuration
     Route::resource('config/tax-master', \App\Http\Controllers\TaxController::class);
+    Route::resource('config/tax-profiles', \App\Http\Controllers\TaxProfileController::class);
 
     // User Configuration
     Route::resource('config/user-master', \App\Http\Controllers\UserController::class);
@@ -30,6 +31,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Purchase Management
     Route::get('purchase/generate-po', [\App\Http\Controllers\PurchaseOrderController::class, 'create'])->name('purchase.generate-po');
     Route::post('purchase/generate-po', [\App\Http\Controllers\PurchaseOrderController::class, 'store'])->name('purchase.generate-po.store');
+    Route::get('purchase/orders/{purchaseOrder}/print', [\App\Http\Controllers\PurchaseOrderPrintController::class, 'print'])->name('purchase.orders.print');
     Route::get('purchase/summary', [\App\Http\Controllers\PurchaseOrderController::class, 'summary'])->name('purchase.summary');
     Route::get('purchase/approved-po', [\App\Http\Controllers\PurchaseOrderController::class, 'approvedPOs'])->name('purchase.approved-po');
     Route::post('purchase/approve-po/{purchaseOrder}', [\App\Http\Controllers\PurchaseOrderController::class, 'approve'])->name('purchase.approve-po');

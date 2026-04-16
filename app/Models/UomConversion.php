@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class UomConversion extends Model
 {
     protected $fillable = [
-        'item_id', 'base_unit_id', 'target_uom_id', 
+        'item_id', 'base_unit_id', 'target_uom_id', 'is_default',
         'uom_multiplier', 'quantity_multiplier', 'min_order_quantity'
     ];
 

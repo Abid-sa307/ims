@@ -17,21 +17,27 @@ class UomController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate(['name' => 'required|string|max:255|unique:uoms,name']);
+        $request->validate([
+            'uom_code' => 'required|string|max:50|unique:uoms,uom_code',
+            'name' => 'required|string|max:255|unique:uoms,name'
+        ]);
         Uom::create($request->all());
         return redirect()->back();
     }
 
-    public function update(Request $request, Uom $uom)
+    public function update(Request $request, Uom $uomMaster)
     {
-        $request->validate(['name' => 'required|string|max:255|unique:uoms,name,' . $uom->id]);
-        $uom->update($request->all());
+        $request->validate([
+            'uom_code' => 'required|string|max:50|unique:uoms,uom_code,' . $uomMaster->id,
+            'name' => 'required|string|max:255|unique:uoms,name,' . $uomMaster->id
+        ]);
+        $uomMaster->update($request->all());
         return redirect()->back();
     }
 
-    public function destroy(Uom $uom)
+    public function destroy(Uom $uomMaster)
     {
-        $uom->delete();
+        $uomMaster->delete();
         return redirect()->back();
     }
 }
