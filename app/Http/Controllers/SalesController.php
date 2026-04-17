@@ -23,9 +23,12 @@ class SalesController extends Controller
             'customers' => Customer::all(),
             'locations' => Location::all(),
             'categories' => ItemCategory::all(),
-            'items' => Item::with('baseUnit')->get(),
+            'items' => Item::with(['baseUnit', 'category'])->get(),
             'uoms' => Uom::all(),
             'taxes' => Tax::all(),
+            'pendingOrders' => SalesInvoice::with(['customer', 'location', 'items.item', 'items.uom'])
+                ->where('status', 'pending')
+                ->get(),
         ]);
     }
 
