@@ -8,7 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
-import { register, home } from '@/routes';
+import { register, home } from '@/routes/index';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
 

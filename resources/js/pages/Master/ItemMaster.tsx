@@ -61,6 +61,7 @@ interface Props {
     subCategories: any[];
     itemTypes: any[];
     uoms: any[];
+    taxProfiles: any[];
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -73,7 +74,8 @@ export default function ItemMaster({
     categories = [], 
     subCategories = [], 
     itemTypes = [], 
-    uoms = [] 
+    uoms = [],
+    taxProfiles = []
 }: Props) {
     const [showList, setShowList] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
@@ -535,11 +537,11 @@ export default function ItemMaster({
                                         <Select value={data.default_tax_id || ''} onValueChange={v => setData('default_tax_id', v)}>
                                             <SelectTrigger><SelectValue placeholder="-- Please Select --" /></SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="0">GST 0%</SelectItem>
-                                                <SelectItem value="1">GST 5%</SelectItem>
-                                                <SelectItem value="2">GST 12%</SelectItem>
-                                                <SelectItem value="3">GST 18%</SelectItem>
-                                                <SelectItem value="4">GST 28%</SelectItem>
+                                                {taxProfiles.map(tp => (
+                                                    <SelectItem key={tp.id} value={String(tp.id)}>
+                                                        {tp.name} ({tp.total_percentage}%)
+                                                    </SelectItem>
+                                                ))}
                                             </SelectContent>
                                         </Select>
                                     </div>

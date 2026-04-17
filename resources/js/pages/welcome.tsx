@@ -1,5 +1,5 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { dashboard, login } from '@/routes';
+import { dashboard, login } from '@/routes/index';
 import AppLogoIcon from '@/components/app-logo-icon';
 
 export default function Welcome() {

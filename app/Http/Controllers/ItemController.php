@@ -8,6 +8,7 @@ use App\Models\ItemSubCategory;
 use App\Models\ItemType;
 use App\Models\Uom;
 use App\Models\UomConversion;
+use App\Models\TaxProfile;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
@@ -27,6 +28,7 @@ class ItemController extends Controller
             'subCategories' => ItemSubCategory::all(),
             'itemTypes' => ItemType::all(),
             'uoms' => Uom::all(),
+            'taxProfiles' => TaxProfile::where('is_active', true)->get(),
         ]);
     }
 
