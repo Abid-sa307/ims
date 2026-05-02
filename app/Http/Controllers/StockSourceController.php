@@ -15,7 +15,7 @@ class StockSourceController extends Controller
     public function index()
     {
         return Inertia::render('Inventory/StockSourceSelection', [
-            'locations' => Location::all(),
+            'locations' => Location::where('location_type', '!=', 'Customer')->get(),
             'categories' => ItemCategory::all(),
             'items' => Item::all(),
             'warehouses' => Warehouse::all(),

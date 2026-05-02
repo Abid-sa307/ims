@@ -13,7 +13,7 @@ class WarehouseController extends Controller
     {
         return Inertia::render('Inventory/WarehouseMaster', [
             'warehouses' => Warehouse::with('location')->get(),
-            'locations' => Location::all()
+            'locations' => Location::where('location_type', '!=', 'Customer')->get()
         ]);
     }
 

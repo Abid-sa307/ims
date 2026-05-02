@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Filter, Download, Clock, CheckCircle2, AlertCircle, RotateCcw, Printer } from 'lucide-react';
+import { Search, Filter, Download, Clock, CheckCircle2, AlertCircle, RotateCcw, Printer, Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 
@@ -25,22 +25,25 @@ interface Props {
     };
     locations: any[];
     suppliers: any[];
+    projects: any[];
     filters: {
         search?: string;
         date_from?: string;
         date_to?: string;
         location_id?: string;
         supplier_id?: string;
+        project_id?: string;
         status?: string;
     };
 }
 
-export default function PurchaseSummary({ purchaseOrders, locations = [], suppliers = [], filters }: Props) {
+export default function PurchaseSummary({ purchaseOrders, locations = [], suppliers = [], projects = [], filters }: Props) {
     const [search, setSearch] = useState(filters.search || '');
     const [dateFrom, setDateFrom] = useState(filters.date_from || '');
     const [dateTo, setDateTo] = useState(filters.date_to || '');
     const [locationId, setLocationId] = useState(filters.location_id || 'all');
     const [supplierId, setSupplierId] = useState(filters.supplier_id || 'all');
+    const [projectId, setProjectId] = useState(filters.project_id || 'all');
     const [status, setStatus] = useState(filters.status || 'all');
 
     const handleFilter = () => {
@@ -50,6 +53,7 @@ export default function PurchaseSummary({ purchaseOrders, locations = [], suppli
             date_to: dateTo,
             location_id: locationId === 'all' ? '' : locationId,
             supplier_id: supplierId === 'all' ? '' : supplierId,
+            project_id: projectId === 'all' ? '' : projectId,
             status: status === 'all' ? '' : status,
         }, { preserveState: true });
     };
@@ -60,6 +64,7 @@ export default function PurchaseSummary({ purchaseOrders, locations = [], suppli
         setDateTo('');
         setLocationId('all');
         setSupplierId('all');
+        setProjectId('all');
         setStatus('all');
         router.get('/purchase/summary', {}, { preserveState: false });
     };
@@ -173,6 +178,22 @@ export default function PurchaseSummary({ purchaseOrders, locations = [], suppli
                                 </Select>
                             </div>
 
+                            {/* Project */}
+                            <div className="space-y-2">
+                                <Label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Project</Label>
+                                <Select value={projectId} onValueChange={setProjectId}>
+                                    <SelectTrigger className="h-11 border-gray-200 bg-[#f8fafc]">
+                                        <SelectValue placeholder="All Projects" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">All Projects</SelectItem>
+                                        {projects.map(proj => (
+                                            <SelectItem key={proj.id} value={proj.id.toString()}>{proj.project_name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
                             {/* Status */}
                             <div className="space-y-2">
                                 <Label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Order Status</Label>
@@ -225,7 +246,12 @@ export default function PurchaseSummary({ purchaseOrders, locations = [], suppli
                                             <tr key={po.id} className="hover:bg-slate-50/50 transition-colors group">
                                                 <td className="px-8 py-5">
                                                     <div className="font-extrabold text-[#162a5b] group-hover:underline cursor-pointer transition-all">{po.order_number}</div>
-                                                    <div className="text-[10px] text-gray-400 font-mono mt-0.5 uppercase tracking-tighter">{po.reference_bill_no || 'No Ref Bill'}</div>
+                                                    <div className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter mt-1 flex items-center gap-1.5">
+                                                        <span className="bg-slate-100 px-1.5 py-0.5 rounded text-gray-500 border border-slate-200">{po.reference_bill_no || 'No Ref Bill'}</span>
+                                                        {po.project && (
+                                                            <span className="bg-indigo-50 px-1.5 py-0.5 rounded text-indigo-600 border border-indigo-100">{po.project.project_name}</span>
+                                                        )}
+                                                    </div>
                                                 </td>
                                                 <td className="px-8 py-5 font-bold text-gray-700">{po.supplier?.supplier_name}</td>
                                                 <td className="px-8 py-5 text-gray-500 font-medium">{po.location?.location_legal_name}</td>
@@ -250,21 +276,33 @@ export default function PurchaseSummary({ purchaseOrders, locations = [], suppli
                                                         size="sm" 
                                                         variant="outline" 
                                                         className="h-8 w-8 p-0 text-slate-400 border-slate-200 hover:bg-slate-50 hover:text-indigo-600 shadow-sm transition-all"
+                                                        onClick={() => router.get(`/purchase/orders/${po.id}/edit`)}
+                                                        title="Edit PO"
+                                                    >
+                                                        <Pencil className="size-4" />
+                                                    </Button>
+                                                    <Button 
+                                                        size="sm" 
+                                                        variant="outline" 
+                                                        className="h-8 w-8 p-0 text-slate-400 border-slate-200 hover:bg-slate-50 hover:text-red-600 shadow-sm transition-all"
+                                                        onClick={() => {
+                                                            if (confirm('Are you sure you want to delete this Purchase Order?')) {
+                                                                router.delete(`/purchase/orders/${po.id}`);
+                                                            }
+                                                        }}
+                                                        title="Delete PO"
+                                                    >
+                                                        <Trash2 className="size-4" />
+                                                    </Button>
+                                                    <Button 
+                                                        size="sm" 
+                                                        variant="outline" 
+                                                        className="h-8 w-8 p-0 text-slate-400 border-slate-200 hover:bg-slate-50 hover:text-indigo-600 shadow-sm transition-all"
                                                         onClick={() => window.open(`/purchase/orders/${po.id}/print`, '_blank')}
                                                         title="Print PO"
                                                     >
                                                         <Printer className="size-4" />
                                                     </Button>
-                                                    {po.status === 'pending' && (
-                                                        <Button 
-                                                            size="sm" 
-                                                            variant="outline" 
-                                                            className="h-8 px-4 text-[10px] font-black text-indigo-600 border-indigo-200 hover:bg-indigo-50 shadow-sm transition-all"
-                                                            onClick={() => router.post(`/purchase/approve-po/${po.id}`)}
-                                                        >
-                                                            APPROVE
-                                                        </Button>
-                                                    )}
                                                 </td>
                                             </tr>
                                         ))

@@ -1,0 +1,71 @@
+npm warn Unknown project config "public-hoist-pattern". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+> build
+> vite build
+
+[36mvite v7.3.1 [32mbuilding client environment for production...[36m[39m
+[plugin @laravel/vite-plugin-wayfinder] Types generated for actions, routes, form variants
+transforming...
+[32m✓[39m 6 modules transformed.
+[31m✗[39m Build failed in 28.03s
+[31merror during build:
+[31m[vite:react-babel] C:\laragon\www\ims\resources\js\pages\Sales\GenerateInvoice.tsx: Expected corresponding JSX closing tag for <select>. (316:32)
+
+[0m [90m 314 |[31m                                 onChange[33m=[31m{(e) [33m=>[31m handleOrderSelect(e[33m.[31mtarget[33m.[31mvalue)}
+ [90m 315 |[31m                             [33m>[31m
+[31m[1m>[22m[31m[90m 316 |[31m                                 [33m<[31m[33m/[31m[33moption[31m[33m>[31m
+ [90m     |[31m                                 [31m[1m^[22m[31m
+ [90m 317 |[31m                                 {pendingOrders[33m.[31mmap(order [33m=>[31m (
+ [90m 318 |[31m                                     [33m<[31m[33moption[31m key[33m=[31m{order[33m.[31mid} value[33m=[31m{order[33m.[31mid}[33m>[31m{order[33m.[31minvoice_number}[33m<[31m[33m/[31m[33moption[31m[33m>[31m
+ [90m 319 |[31m                                 ))}[0m[31m
+file: [36mC:/laragon/www/ims/resources/js/pages/Sales/GenerateInvoice.tsx:316:32[31m
+    at constructor (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:365:19)
+    at TypeScriptParserMixin.raise (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:6599:19)
+    at TypeScriptParserMixin.jsxParseElementAt (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:4727:16)
+    at TypeScriptParserMixin.jsxParseElementAt (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:4698:32)
+    at TypeScriptParserMixin.jsxParseElementAt (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:4698:32)
+    at TypeScriptParserMixin.jsxParseElementAt (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:4698:32)
+    at TypeScriptParserMixin.jsxParseElementAt (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:4698:32)
+    at TypeScriptParserMixin.jsxParseElementAt (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:4698:32)
+    at TypeScriptParserMixin.jsxParseElement (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:4749:17)
+    at TypeScriptParserMixin.parseExprAtom (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:4759:19)
+    at TypeScriptParserMixin.parseExprSubscripts (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:11081:23)
+    at TypeScriptParserMixin.parseUpdate (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:11066:21)
+    at TypeScriptParserMixin.parseMaybeUnary (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:11046:23)
+    at TypeScriptParserMixin.parseMaybeUnary (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:9837:18)
+    at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:10899:61)
+    at TypeScriptParserMixin.parseExprOps (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:10904:23)
+    at TypeScriptParserMixin.parseMaybeConditional (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:10881:23)
+    at TypeScriptParserMixin.parseMaybeAssign (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:10831:21)
+    at C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:9775:39
+    at TypeScriptParserMixin.tryParse (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:6907:20)
+    at TypeScriptParserMixin.parseMaybeAssign (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:9775:18)
+    at C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:10800:39
+    at TypeScriptParserMixin.allowInAnd (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:12426:12)
+    at TypeScriptParserMixin.parseMaybeAssignAllowIn (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:10800:17)
+    at TypeScriptParserMixin.parseMaybeAssignAllowInOrVoidPattern (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:12493:17)
+    at TypeScriptParserMixin.parseParenAndDistinguishExpression (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:11675:28)
+    at TypeScriptParserMixin.parseExprAtom (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:11331:23)
+    at TypeScriptParserMixin.parseExprAtom (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:4764:20)
+    at TypeScriptParserMixin.parseExprSubscripts (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:11081:23)
+    at TypeScriptParserMixin.parseUpdate (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:11066:21)
+    at TypeScriptParserMixin.parseMaybeUnary (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:11046:23)
+    at TypeScriptParserMixin.parseMaybeUnary (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:9837:18)
+    at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:10899:61)
+    at TypeScriptParserMixin.parseExprOps (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:10904:23)
+    at TypeScriptParserMixin.parseMaybeConditional (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:10881:23)
+    at TypeScriptParserMixin.parseMaybeAssign (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:10831:21)
+    at TypeScriptParserMixin.parseMaybeAssign (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:9786:20)
+    at TypeScriptParserMixin.parseExpressionBase (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:10784:23)
+    at C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:10780:39
+    at TypeScriptParserMixin.allowInAnd (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:12421:16)
+    at TypeScriptParserMixin.parseExpression (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:10780:17)
+    at TypeScriptParserMixin.parseReturnStatement (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:13142:28)
+    at TypeScriptParserMixin.parseStatementContent (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:12798:21)
+    at TypeScriptParserMixin.parseStatementContent (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:9508:18)
+    at TypeScriptParserMixin.parseStatementLike (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:12767:17)
+    at TypeScriptParserMixin.parseStatementListItem (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:12747:17)
+    at TypeScriptParserMixin.parseBlockOrModuleBlockBody (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:13316:61)
+    at TypeScriptParserMixin.parseBlockBody (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:13309:10)
+    at TypeScriptParserMixin.parseBlock (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:13297:10)
+    at TypeScriptParserMixin.parseFunctionBody (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:12100:24)[39m

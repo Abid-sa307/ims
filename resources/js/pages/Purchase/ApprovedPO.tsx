@@ -1,107 +1,286 @@
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, Clock, Filter, XCircle } from 'lucide-react';
-import { useState } from 'react';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Calendar, Filter, Plus, Menu, Search, AlignJustify, CheckCircle2, Clock, X, Printer } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Purchase Management', href: '#' },
-    { title: 'Approved PO', href: '/purchase/approved-po' },
+    { title: 'Purchase', href: '#' },
+    { title: 'Purchase Order Approval', href: '/purchase/approved-po' },
 ];
 
 interface Props {
     purchaseOrders: any[];
-    filters: {
-        date_from?: string;
-        date_to?: string;
-    };
+    locations: any[];
+    suppliers: any[];
+    filters: any;
 }
 
-export default function ApprovedPO({ purchaseOrders, filters }: Props) {
-    const [dateFrom, setDateFrom] = useState(filters.date_from || '');
-    const [dateTo, setDateTo] = useState(filters.date_to || '');
+export default function ApprovedPO({ purchaseOrders, locations, suppliers, filters }: Props) {
+    const { flash } = usePage().props as any;
+    const [showFlash, setShowFlash] = useState(false);
+
+    useEffect(() => {
+        if (flash?.success) {
+            setShowFlash(true);
+            const timer = setTimeout(() => setShowFlash(false), 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [flash]);
+
+    const [filterState, setFilterState] = useState({
+        date_from: filters?.date_from || '',
+        date_to: filters?.date_to || '',
+        location_id: filters?.location_id || '',
+        supplier_id: filters?.supplier_id || '',
+        search: ''
+    });
 
     const handleFilter = () => {
-        router.get('/purchase/approved-po', { date_from: dateFrom, date_to: dateTo }, { preserveState: true });
+        router.get('/purchase/approved-po', filterState, {
+            preserveState: true,
+            replace: true
+        });
     };
 
-    const clearFilter = () => {
-        setDateFrom('');
-        setDateTo('');
-        router.get('/purchase/approved-po', {}, { preserveState: true });
+    const handleReview = (id: number) => {
+        router.get(`/purchase/orders/${id}/review`);
     };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Pending Approval - PO" />
-            <div className="flex h-full flex-col p-6 bg-gray-50/50">
-                <div className="flex flex-col md:flex-row items-center justify-between border-b pb-6 mb-8 border-t-2 border-t-amber-500 bg-white p-6 shadow-sm rounded-xl gap-4">
-                    <div className="flex items-center gap-4">
-                        <div className="size-12 rounded-full bg-amber-50 flex items-center justify-center text-amber-600">
-                            <Clock className="size-6" />
+            <Head title="Purchase Order Approval" />
+            <div className="flex h-full flex-col p-4 sm:p-6 lg:p-8 bg-gray-50/50 overflow-y-auto relative">
+                
+                {showFlash && flash?.success && (
+                    <div className="mb-6 bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-md flex items-center justify-between shadow-sm animate-in fade-in slide-in-from-top-4 duration-300">
+                        <div className="flex items-center gap-3">
+                            <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                            <p className="text-sm font-bold tracking-tight">{flash.success}</p>
                         </div>
-                        <div>
-                            <h1 className="text-lg font-bold text-gray-900">Purchase Order Approval</h1>
-                            <p className="text-sm text-gray-500">History and authorization of purchase orders.</p>
-                        </div>
+                        <button onClick={() => setShowFlash(false)} className="text-emerald-500 hover:text-emerald-700 transition-colors">
+                            <X className="h-4 w-4" />
+                        </button>
                     </div>
-                    
-                    <div className="flex items-end gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                        <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">From Date</label>
-                            <Input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="h-8 text-xs w-36" />
-                        </div>
-                        <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">To Date</label>
-                            <Input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="h-8 text-xs w-36" />
-                        </div>
-                        <div className="flex gap-1">
-                            <Button onClick={handleFilter} size="sm" className="h-8 bg-[#162a5b] hover:bg-[#1c3a7a] gap-1 px-3">
-                                <Filter className="size-3" /> Filter
-                            </Button>
-                            {(filters.date_from || filters.date_to) && (
-                                <Button onClick={clearFilter} variant="outline" size="sm" className="h-8 gap-1 px-3 text-red-600 border-red-100 hover:bg-red-50">
-                                    <XCircle className="size-3" /> Clear
-                                </Button>
-                            )}
-                        </div>
+                )}
+
+                <div className="flex items-center justify-between border-b pb-4 mb-6">
+                    <h1 className="text-xl font-bold tracking-tight text-[#162a5b]">Purchase Order Approval</h1>
+                    <div className="flex bg-white rounded-md ring-1 ring-gray-200 shadow-sm overflow-hidden">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-600 rounded-none border-r border-gray-100 hover:bg-gray-50">
+                            <Menu className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-600 rounded-none hover:bg-gray-50">
+                            <Plus className="h-4 w-4" />
+                        </Button>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {purchaseOrders.length > 0 ? (
-                        purchaseOrders.map((po) => (
-                            <div key={po.id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-                                <div className="flex justify-between items-start mb-4">
-                                    <span className="bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">{po.order_number}</span>
-                                    <div className="flex items-center text-gray-400 gap-1 text-[10px]">
-                                        <Clock className="size-3" /> {new Date(po.po_date).toLocaleDateString()}
+                <div className="bg-white rounded-md border shadow-sm flex flex-col mb-6 transition-all border-gray-100">
+                    <div className="p-4 border-b border-gray-100 bg-white">
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                            <div className="md:col-span-4 lg:col-span-4 space-y-2">
+                                <Label className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Ordered Date Range:</Label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <div className="flex rounded-md shadow-sm">
+                                        <div className="flex items-center justify-center px-2 border border-r-0 border-gray-200 bg-gray-50 rounded-l-md group-focus-within:border-blue-500 transition-colors">
+                                            <Calendar className="h-3 w-3 text-gray-400" />
+                                        </div>
+                                        <Input
+                                            type="date"
+                                            className="h-9 rounded-l-none border-gray-200 focus-visible:ring-1 focus-visible:ring-blue-500 text-[10px] px-1"
+                                            value={filterState.date_from}
+                                            onChange={e => setFilterState({...filterState, date_from: e.target.value})}
+                                        />
+                                    </div>
+                                    <div className="flex rounded-md shadow-sm">
+                                        <div className="flex items-center justify-center px-2 border border-r-0 border-gray-200 bg-gray-50 rounded-l-md group-focus-within:border-blue-500 transition-colors">
+                                            <Calendar className="h-3 w-3 text-gray-400" />
+                                        </div>
+                                        <Input
+                                            type="date"
+                                            className="h-9 rounded-l-none border-gray-200 focus-visible:ring-1 focus-visible:ring-blue-500 text-[10px] px-1"
+                                            value={filterState.date_to}
+                                            onChange={e => setFilterState({...filterState, date_to: e.target.value})}
+                                        />
                                     </div>
                                 </div>
-                                <h3 className="font-bold text-gray-900 mb-1">{po.supplier?.supplier_name || 'N/A'}</h3>
-                                <p className="text-xs text-gray-500 mb-6 font-medium">Total Amount: ₹ {Number(po.grand_total).toLocaleString()}</p>
-                                
-                                {po.status === 'pending' ? (
-                                    <Button 
-                                        className="w-full bg-amber-500 hover:bg-amber-600 h-9 text-xs font-bold text-white shadow-lg shadow-amber-100 flex items-center justify-center gap-2"
-                                        onClick={() => router.post(`/purchase/approve-po/${po.id}`)}
-                                    >
-                                        <CheckCircle2 className="size-4" /> APPROVE ORDER
-                                    </Button>
-                                ) : (
-                                    <div className="w-full bg-green-50 text-green-600 h-9 text-[10px] font-black uppercase rounded-lg border border-green-100 flex items-center justify-center gap-2">
-                                        <CheckCircle2 className="size-4" /> Order Approved
-                                    </div>
-                                )}
                             </div>
-                        ))
-                    ) : (
-                        <div className="col-span-full py-20 text-center text-gray-400">
-                            <Clock className="size-12 mx-auto mb-4 opacity-10" />
-                            <p>No purchase orders found matching your criteria.</p>
+
+                            <div className="md:col-span-4 lg:col-span-3 space-y-2">
+                                <Label className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Location</Label>
+                                <select 
+                                    value={filterState.location_id}
+                                    onChange={e => setFilterState({...filterState, location_id: e.target.value})}
+                                    className="flex h-9 w-full rounded-md border border-gray-200 bg-white px-3 py-1 text-xs text-gray-700 shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
+                                >
+                                    <option value="">All selected ({locations?.length || 0})</option>
+                                    {locations?.map((loc: any) => (
+                                        <option key={loc.id} value={loc.id}>{loc.location_legal_name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="md:col-span-4 lg:col-span-3 space-y-2">
+                                <Label className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Supplier</Label>
+                                <select 
+                                    value={filterState.supplier_id}
+                                    onChange={e => setFilterState({...filterState, supplier_id: e.target.value})}
+                                    className="flex h-9 w-full rounded-md border border-gray-200 bg-white px-3 py-1 text-xs text-gray-700 shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
+                                >
+                                    <option value="">None selected</option>
+                                    {suppliers?.map((sup: any) => (
+                                        <option key={sup.id} value={sup.id}>{sup.supplier_name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="md:col-span-12 lg:col-span-2 flex items-end">
+                                <Button onClick={handleFilter} className="w-full bg-[#3490dc] hover:bg-[#2779bd] text-white h-9 shadow-sm font-bold tracking-widest text-[11px] flex items-center justify-center gap-2">
+                                    <Filter className="h-3.5 w-3.5" /> FILTER
+                                </Button>
+                            </div>
                         </div>
-                    )}
+                    </div>
+
+                    <div className="p-4 flex flex-col lg:flex-row justify-between items-center gap-4 bg-gray-50/20 shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)]">
+                        <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Filter:</span>
+                            <div className="relative group">
+                                <Search className="absolute left-0 top-1.5 h-3.5 w-3.5 text-gray-300 group-focus-within:text-blue-500 transition-colors" />
+                                <Input 
+                                    type="text" 
+                                    placeholder="Type to filter..." 
+                                    value={filterState.search}
+                                    onChange={e => setFilterState({...filterState, search: e.target.value})}
+                                    className="h-7 w-[180px] border-0 border-b border-gray-200 rounded-none shadow-none pl-5 pr-0 focus-visible:ring-0 focus-visible:border-blue-500 text-xs bg-transparent transition-all" 
+                                />
+                            </div>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-4 justify-center">
+                            <div className="flex bg-white border border-gray-200 rounded shadow-sm text-[9px] font-black text-gray-500 tracking-tighter">
+                                <button className="px-3 py-1.5 hover:bg-gray-50 border-r border-gray-100 transition-colors uppercase">COPY</button>
+                                <button className="px-3 py-1.5 hover:bg-gray-50 border-r border-gray-100 transition-colors uppercase">CSV</button>
+                                <button className="px-3 py-1.5 hover:bg-gray-50 border-r border-gray-100 transition-colors uppercase">PRINT</button>
+                                <button className="px-3 py-1.5 hover:bg-gray-50 border-r border-gray-100 transition-colors uppercase">PDF</button>
+                                <button className="px-2 py-1.5 hover:bg-gray-50 flex items-center justify-center transition-colors">
+                                    <AlignJustify className="h-3 w-3" /> <span className="ml-1 text-[7px]">▼</span>
+                                </button>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">Show:</span>
+                                <select className="h-7 border-gray-200 text-[10px] font-bold rounded shadow-sm bg-white pr-7 py-0 focus:ring-1 focus:ring-blue-500 cursor-pointer">
+                                    <option>10</option>
+                                    <option>25</option>
+                                    <option>50</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="w-full overflow-x-auto">
+                        <table className="w-full text-xs text-left align-middle border-collapse">
+                            <thead>
+                                <tr className="bg-white border-b border-gray-100">
+                                    <th className="px-4 py-3.5 font-bold text-[#162a5b] uppercase text-[10px] tracking-widest border-r border-gray-50">Approve</th>
+                                    <th className="px-4 py-3.5 font-bold text-[#162a5b] uppercase text-[10px] tracking-widest border-r border-gray-50 text-center">Sr. No</th>
+                                    <th className="px-4 py-3.5 font-bold text-[#162a5b] uppercase text-[10px] tracking-widest border-r border-gray-50">Supplier</th>
+                                    <th className="px-4 py-3.5 font-bold text-[#162a5b] uppercase text-[10px] tracking-widest border-r border-gray-50">Location</th>
+                                    <th className="px-4 py-3.5 font-bold text-[#162a5b] uppercase text-[10px] tracking-widest border-r border-gray-50">Order No.</th>
+                                    <th className="px-4 py-3.5 font-bold text-[#162a5b] uppercase text-[10px] tracking-widest border-r border-gray-50 text-center">Dispatch Date</th>
+                                    <th className="px-4 py-3.5 font-bold text-[#162a5b] uppercase text-[10px] tracking-widest border-r border-gray-50 text-center">Expected Date</th>
+                                    <th className="px-4 py-3.5 font-bold text-[#162a5b] uppercase text-[10px] tracking-widest border-r border-gray-50 text-right">Total Amount</th>
+                                    <th className="px-4 py-3.5 font-bold text-[#162a5b] uppercase text-[10px] tracking-widest border-r border-gray-50 text-right">Discount Amt</th>
+                                    <th className="px-4 py-3.5 font-bold text-[#162a5b] uppercase text-[10px] tracking-widest border-r border-gray-50 text-right">Addtl Charge</th>
+                                    <th className="px-4 py-3.5 font-bold text-[#162a5b] uppercase text-[10px] tracking-widest text-right">Payabale Amt</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-50">
+                                {purchaseOrders.length > 0 ? purchaseOrders.map((po: any, index: number) => (
+                                    <tr key={po.id} className="hover:bg-blue-50/20 transition-colors group">
+                                        <td className="px-4 py-3 text-center border-r border-gray-50/50 flex items-center justify-center gap-2">
+                                            {po.status === 'pending' ? (
+                                                <>
+                                                    <Button 
+                                                        variant="outline" 
+                                                        size="icon" 
+                                                        className="h-7 w-7 text-green-600 border-green-200 hover:bg-green-600 hover:text-white transition-all shadow-sm active:scale-95"
+                                                        onClick={() => handleReview(po.id)}
+                                                        title="Review & Approve"
+                                                    >
+                                                        <CheckCircle2 className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button 
+                                                        variant="outline" 
+                                                        size="icon" 
+                                                        className="h-7 w-7 text-gray-400 border-gray-200 hover:bg-gray-50 transition-all shadow-sm"
+                                                        onClick={() => window.open(`/purchase/orders/${po.id}/print`, '_blank')}
+                                                        title="Print Preview"
+                                                    >
+                                                        <Printer className="h-3.5 w-3.5" />
+                                                    </Button>
+                                                </>
+                                            ) : (
+                                                <div className="h-7 w-7 rounded-md bg-green-50 flex items-center justify-center text-green-600 mx-auto border border-green-100 shadow-sm" title="Already Approved">
+                                                    <CheckCircle2 className="h-4 w-4" />
+                                                </div>
+                                            )}
+                                        </td>
+                                        <td className="px-4 py-3 text-gray-500 border-r border-gray-50/50 text-center font-medium">{index + 1}</td>
+                                        <td className="px-4 py-3 text-gray-700 border-r border-gray-50/50 max-w-[160px] truncate font-semibold uppercase text-[10px] tracking-tight">
+                                            {po.supplier?.supplier_name}
+                                        </td>
+                                        <td className="px-4 py-3 text-gray-600 border-r border-gray-50/50 italic text-[10px] font-medium tracking-tight">
+                                            {po.location?.location_legal_name}
+                                        </td>
+                                        <td className="px-4 py-3 font-black text-gray-900 border-r border-gray-50/50 uppercase tracking-tighter text-[10px]">
+                                            {po.order_number}
+                                        </td>
+                                        <td className="px-4 py-3 text-gray-500 border-r border-gray-50/50 text-center text-[10px] font-medium tracking-wider">
+                                            {po.po_date}
+                                        </td>
+                                        <td className="px-4 py-3 text-gray-500 border-r border-gray-50/50 text-center text-[10px] font-medium tracking-wider italic">
+                                            {po.exp_order_date || 'N/A'}
+                                        </td>
+                                        <td className="px-4 py-3 text-right text-gray-700 border-r border-gray-50/50 font-bold tabular-nums">
+                                            {Number(po.total_amount).toFixed(2)}
+                                        </td>
+                                        <td className="px-4 py-3 text-right text-red-500 border-r border-gray-50/50 font-medium tabular-nums">
+                                            {Number(po.discount_amount || 0).toFixed(2)}
+                                        </td>
+                                        <td className="px-4 py-3 text-right text-blue-500 border-r border-gray-50/50 font-medium tabular-nums">
+                                            {Number(po.additional_charges || 0).toFixed(2)}
+                                        </td>
+                                        <td className="px-4 py-3 text-right font-black text-blue-900 bg-blue-50/20 tabular-nums">
+                                            {Number(po.grand_total).toFixed(2)}
+                                        </td>
+                                    </tr>
+                                )) : (
+                                    <tr>
+                                        <td colSpan={12} className="py-20 text-center text-gray-300 font-bold uppercase tracking-[0.2em] italic bg-white">
+                                            No Pending Approval Orders Available
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div className="p-4 flex items-center justify-between text-[10px] font-black text-gray-400 uppercase tracking-widest border-t border-gray-50 bg-gray-50/50 shadow-[inset_0_1px_2px_rgba(0,0,0,0.01)]">
+                        <div>Showing {purchaseOrders.length > 0 ? 1 : 0} To {purchaseOrders.length} Of {purchaseOrders.length} Entries</div>
+                        <div className="flex gap-6 items-center">
+                            <button className="hover:text-blue-600 transition-colors flex items-center gap-1 group">
+                                <span className="group-hover:-translate-x-1 transition-transform">←</span> PREVIOUS
+                            </button>
+                            <button className="hover:text-blue-600 transition-colors flex items-center gap-1 group">
+                                NEXT <span className="group-hover:translate-x-1 transition-transform">→</span>
+                            </button>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </AppLayout>

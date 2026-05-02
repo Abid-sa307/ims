@@ -19,7 +19,7 @@ class DashboardController extends Controller
         // Filterable query for Purchase Orders
         $poQuery = PurchaseOrder::query();
         if ($locationId) {
-            $poQuery->where('location_id', $locationId);
+            $poQuery->where('purchase_orders.location_id', $locationId);
         }
         if ($dateFrom) {
             $poQuery->where('po_date', '>=', $dateFrom);
@@ -74,17 +74,68 @@ class DashboardController extends Controller
         // Supplier Wise Purchase Chart Data
         $supplierPurchases = $poQuery->clone()
             ->join('suppliers', 'purchase_orders.supplier_id', '=', 'suppliers.id')
-            ->select('suppliers.supplier_name as name', DB::raw('SUM(grand_total) as value'))
+            ->select('suppliers.supplier_name as name', DB::raw('CAST(SUM(grand_total) AS UNSIGNED) as value'))
             ->groupBy('suppliers.supplier_name')
             ->orderByDesc('value')
             ->limit(5)
             ->get();
 
+        // Category Wise Purchase Chart Data
+        $categoryPurchases = DB::table('purchase_order_items')
+            ->join('purchase_orders', 'purchase_order_items.purchase_order_id', '=', 'purchase_orders.id')
+            ->join('items', 'purchase_order_items.item_id', '=', 'items.id')
+            ->join('item_categories', 'items.item_category_id', '=', 'item_categories.id')
+            ->select('item_categories.name as name', DB::raw('CAST(SUM(purchase_order_items.total_amount) AS UNSIGNED) as value'))
+            ->when($locationId, fn($q) => $q->where('purchase_orders.location_id', $locationId))
+            ->when($dateFrom, fn($q) => $q->where('purchase_orders.po_date', '>=', $dateFrom))
+            ->when($dateTo, fn($q) => $q->where('purchase_orders.po_date', '<=', $dateTo))
+            ->groupBy('item_categories.name')
+            ->orderByDesc('value')
+            ->limit(5)
+            ->get();
+
+        // Creditors List (Suppliers with Balance)
+        $creditors = \App\Models\Supplier::join('purchase_orders', 'suppliers.id', '=', 'purchase_orders.supplier_id')
+            ->join('locations', 'purchase_orders.location_id', '=', 'locations.id')
+            ->selectRaw('suppliers.id, suppliers.supplier_name, locations.location_legal_name, SUM(purchase_orders.grand_total) as total_purchase')
+            ->groupBy('suppliers.id', 'suppliers.supplier_name', 'locations.id', 'locations.location_legal_name')
+            ->get()
+            ->map(function($creditor) {
+                $payments = \App\Models\SupplierPayment::where('supplier_id', $creditor->id)->sum('amount');
+                $debitNotes = \App\Models\DebitNote::where('supplier_id', $creditor->id)->sum('grand_total');
+                $creditor->balance = $creditor->total_purchase - $payments - $debitNotes;
+                return $creditor;
+            })
+            ->filter(fn($c) => $c->balance > 0)
+            ->sortByDesc('balance')
+            ->values()
+            ->take(5);
+
+        // Debtors List (Customers with Balance)
+        $debtors = \App\Models\Customer::join('sales_invoices', 'customers.id', '=', 'sales_invoices.customer_id')
+            ->join('locations', 'sales_invoices.location_id', '=', 'locations.id')
+            ->selectRaw('customers.id, customers.customer_name, locations.location_legal_name, SUM(sales_invoices.grand_total) as total_sales')
+            ->groupBy('customers.id', 'customers.customer_name', 'locations.id', 'locations.location_legal_name')
+            ->get()
+            ->map(function($debtor) {
+                $payments = \App\Models\CustomerPayment::where('customer_id', $debtor->id)->sum('amount');
+                $creditNotes = \App\Models\CreditNote::where('customer_id', $debtor->id)->sum('grand_total');
+                $debtor->balance = $debtor->total_sales - $payments - $creditNotes;
+                return $debtor;
+            })
+            ->filter(fn($d) => $d->balance > 0)
+            ->sortByDesc('balance')
+            ->values()
+            ->take(5);
+
         return Inertia::render('Dashboard/Index', [
             'purchaseStats' => $purchaseStats,
             'salesStats' => $salesStats,
             'supplierData' => $supplierPurchases,
-            'locations' => Location::all(),
+            'categoryData' => $categoryPurchases,
+            'creditors' => $creditors,
+            'debtors' => $debtors,
+            'locations' => Location::where('location_type', 'HQ')->get(),
             'filters' => $request->only(['location_id', 'date_from', 'date_to'])
         ]);
     }

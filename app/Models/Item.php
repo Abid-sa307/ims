@@ -9,7 +9,7 @@ class Item extends Model
     protected $fillable = [
         'item_name', 'uom', 'price', 'tax_percent', 'cess_percent', 'description',
         'item_category_id', 'item_sub_category_id', 'brand_id', 'item_type_id',
-        'item_name_gujarati', 'equivalent_selling_item', 'safety_quantity',
+        'item_name_gujarati', 'safety_quantity',
         'base_unit_id', 'default_tax_id', 'selling_item_as', 'hsn_code', 'sac_code',
         'htsn_code', 'fda_product_code', 'is_cess', 'cess_percentage', 'cess_description', 
         'price_type', 'standard_sale_price', 'standard_purchase_price', 'net_cost',
@@ -53,5 +53,10 @@ class Item extends Model
     public function itemWarehouseMappings()
     {
         return $this->hasMany(ItemWarehouseMapping::class);
+    }
+
+    public function taxProfile()
+    {
+        return $this->belongsTo(TaxProfile::class, 'default_tax_id');
     }
 }

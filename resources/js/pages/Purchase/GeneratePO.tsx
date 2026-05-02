@@ -4,8 +4,9 @@ import { BreadcrumbItem } from '@/types';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Calendar, MessageSquare, PlusCircle, Trash2, List, Zap } from 'lucide-react';
+import { Calendar, MessageSquare, PlusCircle, Trash2, List, Zap, PackageCheck } from 'lucide-react';
 import { useEffect, useMemo } from 'react';
+import { cn } from '@/lib/utils';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Purchase', href: '#' },
@@ -13,10 +14,11 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function GeneratePO() {
-    const { locations, suppliers, items } = usePage().props as any;
+    const { locations, suppliers, items, projects } = usePage().props as any;
 
     const { data, setData, post, processing, errors } = useForm({
         location_id: '',
+        project_id: '',
         supplier_id: '',
         reference_bill_no: '',
         reference_challan_no: '',
@@ -33,9 +35,11 @@ export default function GeneratePO() {
         grand_total: 0,
         remarks: '',
         is_auto_approved: false,
+        is_receive_now: false,
         items: [
             {
                 item_id: '',
+                item_remark: '',
                 uom: '',
                 qty: 1,
                 fat_value: '',
@@ -62,6 +66,26 @@ export default function GeneratePO() {
         ]
     });
 
+    const filteredSuppliers = useMemo(() => {
+        if (!data.location_id) return [];
+        
+        const loc = locations.find((l: any) => l.id.toString() === data.location_id.toString());
+        if (!loc) return [];
+
+        const allottedIds = Array.isArray(loc.allotted_supplier_ids) ? loc.allotted_supplier_ids.map((id: any) => id.toString()) : [];
+        if (loc.supplier_id) allottedIds.push(loc.supplier_id.toString());
+
+        return suppliers.filter((s: any) => 
+            s.location_id?.toString() === data.location_id.toString() || 
+            allottedIds.includes(s.id.toString())
+        );
+    }, [data.location_id, suppliers, locations]);
+
+    const filteredProjects = useMemo(() => {
+        if (!data.location_id) return [];
+        return projects.filter((p: any) => p.location_id?.toString() === data.location_id.toString());
+    }, [data.location_id, projects]);
+
     const UT_LIST = ['chandigarh', 'ladakh', 'lakshadweep', 'andaman and nicobar islands', 'dadra and nagar haveli and daman and diu'];
 
     // Helper to calculate totals based on item rows
@@ -73,7 +97,7 @@ export default function GeneratePO() {
         let totalIGST = 0;
         let totalUTGST = 0;
 
-        const selectedSupplier = suppliers.find((s: any) => s.id.toString() === data.supplier_id.toString());
+        const selectedSupplier = suppliers.find((s: any) => s.id?.toString() === data.supplier_id?.toString());
         const supplierState = (selectedSupplier?.state || '').toLowerCase();
         
         let regime = 'INTER';
@@ -164,7 +188,7 @@ export default function GeneratePO() {
             if (selectedItem) {
                 newItems[index].current_price = selectedItem.price;
                 newItems[index].uom = selectedItem.base_unit?.uom_code || selectedItem.uom;
-                newItems[index].tax_percent = selectedItem.tax_percent;
+                newItems[index].tax_percent = Number(selectedItem.tax_percent) || Number(selectedItem.tax_profile?.total_percentage) || 0;
                 newItems[index].cess_percent = selectedItem.cess_percent;
             }
         }
@@ -174,7 +198,7 @@ export default function GeneratePO() {
 
     const addItemRow = () => {
         setData('items', [...data.items, {
-            item_id: '', uom: '', qty: 1, fat_value: '', last_price: 0, current_price: 0, expire_date: '',
+            item_id: '', item_remark: '', uom: '', qty: 1, fat_value: '', last_price: 0, current_price: 0, expire_date: '',
             discount_percent: 0, discount_amount: 0, taxable_amount: 0, cess_percent: 0, cess_amount: 0,
             tax_percent: 0, tax_amount: 0, cgst_percent: 0, cgst_amount: 0, 
             sgst_percent: 0, sgst_amount: 0, igst_percent: 0, igst_amount: 0, 
@@ -197,7 +221,7 @@ export default function GeneratePO() {
     const baseTotalAmount = data.items.reduce((sum, item) => sum + (Number(item.qty) * Number(item.current_price)), 0);
 
     const regime = useMemo(() => {
-        const selectedSupplier = suppliers.find((s: any) => s.id.toString() === data.supplier_id.toString());
+        const selectedSupplier = suppliers.find((s: any) => s.id?.toString() === data.supplier_id?.toString());
         const state = (selectedSupplier?.state || '').toLowerCase();
         if (state === 'gujarat') return 'INTRA';
         if (UT_LIST.includes(state)) return 'UT';
@@ -208,19 +232,64 @@ export default function GeneratePO() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Generate Purchase Order" />
             <form onSubmit={submit} className="flex h-full flex-col p-4 sm:p-6 lg:p-8 overflow-y-auto bg-gray-50/50">
-                <div className="flex items-center justify-between border-b pb-4 mb-6">
-                    <h1 className="text-xl font-bold tracking-tight text-[#162a5b]">Generate Purchase Order</h1>
-                    <div className="flex items-center gap-2">
-                        {errors.error && (
-                            <div className="bg-red-50 text-red-600 px-3 py-1 rounded-md text-xs font-medium border border-red-100 animate-pulse">
-                                {errors.error}
-                            </div>
-                        )}
-                        <Link href="/purchase/summary">
-                            <Button type="button" variant="outline" size="icon" className="h-8 w-8 text-muted-foreground">
-                                <List className="h-4 w-4" />
-                            </Button>
-                        </Link>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b pb-4 mb-6 gap-4">
+                    <div>
+                        <h1 className="text-xl font-bold tracking-tight text-[#162a5b]">Generate Purchase Order</h1>
+                        <p className="text-[10px] text-gray-500 font-medium uppercase tracking-widest mt-0.5">Create and process new procurement orders</p>
+                    </div>
+                    
+                    <div className="flex flex-wrap items-center gap-3">
+                        {/* Compact Workflow Selection at Top */}
+                        <div className="flex bg-gray-100 p-1 rounded-lg border border-gray-200 shadow-sm">
+                            <button 
+                                type="button"
+                                onClick={() => setData('is_receive_now', false)}
+                                className={cn(
+                                    "px-3 py-1.5 rounded-md text-[10px] font-bold uppercase transition-all flex items-center gap-1.5",
+                                    !data.is_receive_now ? "bg-white text-indigo-700 shadow-sm ring-1 ring-gray-200" : "text-gray-500 hover:text-gray-700"
+                                )}
+                            >
+                                <List className="size-3" /> Receive Later
+                            </button>
+                            <button 
+                                type="button"
+                                onClick={() => setData('is_receive_now', true)}
+                                className={cn(
+                                    "px-3 py-1.5 rounded-md text-[10px] font-bold uppercase transition-all flex items-center gap-1.5",
+                                    data.is_receive_now ? "bg-[#5cb85c] text-white shadow-sm" : "text-gray-500 hover:text-gray-700"
+                                )}
+                            >
+                                <PackageCheck className="size-3" /> Receive Now
+                            </button>
+                        </div>
+
+                        <div className="flex items-center gap-2 bg-indigo-50/50 px-3 py-1.5 rounded-lg border border-indigo-100 shadow-sm transition-all hover:bg-indigo-100/50">
+                            <input 
+                                type="checkbox" 
+                                id="auto_approve_top"
+                                checked={data.is_auto_approved} 
+                                onChange={e => setData('is_auto_approved', e.target.checked)}
+                                className="size-3.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                            />
+                            <Label htmlFor="auto_approve_top" className="text-[10px] font-black text-indigo-900 cursor-pointer flex items-center gap-1.5 uppercase tracking-tight">
+                                < Zap className="size-3.5 text-amber-500 fill-amber-500" /> Auto Approve
+                            </Label>
+                        </div>
+
+                        <div className="h-8 w-px bg-gray-200 mx-1 hidden sm:block" />
+
+                        <div className="flex items-center gap-2">
+                            {errors.error && (
+                                <div className="bg-red-50 text-red-600 px-3 py-1 rounded-md text-xs font-medium border border-red-100 animate-pulse">
+                                    {errors.error}
+                                </div>
+                            )}
+                            <Link href="/purchase/summary">
+                                <Button type="button" variant="outline" size="icon" className="h-8 w-8 text-muted-foreground shadow-sm bg-white">
+                                    <List className="h-4 w-4" />
+                                </Button>
+                            </Link>
+                        </div>
                     </div>
                 </div>
 
@@ -250,11 +319,25 @@ export default function GeneratePO() {
                                         className="flex h-10 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
                                     >
                                         <option value="">--- Select Supplier ---</option>
-                                        {suppliers?.map((sup: any) => (
+                                        {filteredSuppliers?.map((sup: any) => (
                                             <option key={sup.id} value={sup.id}>{sup.supplier_name} - {sup.state || 'N/A'}</option>
                                         ))}
                                     </select>
                                     {errors.supplier_id && <span className="text-red-500 text-xs">{errors.supplier_id}</span>}
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-xs text-muted-foreground font-semibold">Project</Label>
+                                    <select 
+                                        value={data.project_id} 
+                                        onChange={e => setData('project_id', e.target.value)}
+                                        className="flex h-10 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
+                                    >
+                                        <option value="">--- Select Project ---</option>
+                                        {filteredProjects?.map((proj: any) => (
+                                            <option key={proj.id} value={proj.id}>{proj.project_name}</option>
+                                        ))}
+                                    </select>
+                                    {errors.project_id && <span className="text-red-500 text-xs">{errors.project_id}</span>}
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="text-xs text-muted-foreground font-semibold">Ref Bill No.</Label>
@@ -335,6 +418,12 @@ export default function GeneratePO() {
                                                     <option key={i.id} value={i.id}>{i.item_name}</option>
                                                 ))}
                                             </select>
+                                            <Input 
+                                                placeholder="Remarks/Notes" 
+                                                value={item.item_remark} 
+                                                onChange={e => handleItemChange(index, 'item_remark', e.target.value)} 
+                                                className="h-7 px-2 text-[10px] mt-1.5 border-gray-200 italic bg-white/50"
+                                            />
                                         </td>
                                         <td className="p-2 border-r align-top">
                                             <Input value={item.uom} readOnly className="h-8 px-2 text-xs bg-gray-100" />
@@ -457,26 +546,12 @@ export default function GeneratePO() {
 
                 {/* Footer Buttons */}
                 <div className="flex flex-col sm:flex-row justify-between items-end gap-6 mt-6 pt-6 border-t border-gray-100">
-                    <div className="w-full sm:flex-1 max-w-2xl flex flex-col gap-4">
-                        <div>
-                            <Label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 block">Order Remarks / Internal Notes</Label>
-                            <Input value={data.remarks} onChange={e => setData('remarks', e.target.value)} className="bg-white text-gray-700 h-11 w-full rounded-xl" placeholder="Type any specific instructions..." />
-                        </div>
-                        <div className="flex items-center gap-3 bg-indigo-50/50 p-4 rounded-xl border border-indigo-100/50 w-fit">
-                            <input 
-                                type="checkbox" 
-                                id="auto_approve"
-                                checked={data.is_auto_approved} 
-                                onChange={e => setData('auto_approve', e.target.checked)}
-                                className="size-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                            />
-                            <Label htmlFor="auto_approve" className="text-xs font-bold text-indigo-900 cursor-pointer flex items-center gap-2">
-                                < Zap className="size-3" /> AUTO APPROVE THIS PURCHASE ORDER
-                            </Label>
-                        </div>
+                    <div className="w-full sm:flex-1 max-w-2xl">
+                        <Label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 block">Order Remarks / Internal Notes</Label>
+                        <Input value={data.remarks} onChange={e => setData('remarks', e.target.value)} className="bg-white text-gray-700 h-11 w-full rounded-xl shadow-sm border-gray-200" placeholder="Type any specific instructions..." />
                     </div>
 
-                    <Button type="submit" disabled={processing} className="bg-[#5cb85c] hover:bg-[#4cae4c] text-white font-black italic uppercase px-12 h-11 text-xs rounded-xl shadow-lg">
+                    <Button type="submit" disabled={processing} className="bg-[#5cb85c] hover:bg-[#4cae4c] text-white font-black italic uppercase px-12 h-11 text-xs rounded-xl shadow-lg transform active:scale-95 transition-transform">
                         {processing ? 'GENERATING...' : 'GENERATE PURCHASE ORDER'}
                     </Button>
                 </div>

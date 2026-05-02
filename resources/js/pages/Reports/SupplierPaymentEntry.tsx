@@ -3,6 +3,7 @@ import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
 import { useState } from 'react';
 import { LayoutList } from 'lucide-react';
+import { useForm } from '@inertiajs/react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'New Reports', href: '#' },
@@ -18,21 +19,25 @@ interface Transaction {
     created_date: string;
 }
 
-const LAST_TEN: Transaction[] = [];
-
-const SUPPLIERS = ['LOCAL SUPPLIER', 'Asha Vegetables', 'FOOD SOLUTION GROCERY'];
 const PAYMENT_TYPES = ['Cash', 'Card Payment', 'Phone Pay', 'Bank Transfer', 'Cheque', 'Online'];
 
-export default function SupplierPaymentEntry() {
-    const [supplier, setSupplier] = useState('');
-    const [paymentType, setPaymentType] = useState('');
-    const [amount, setAmount] = useState('');
-    const [description, setDescription] = useState('');
-    const balance = 0; // would come from backend based on selected supplier
+export default function SupplierPaymentEntry({ lastTen = [], suppliers = [] }: any) {
+    const { data, setData, post, processing, errors, reset } = useForm({
+        supplier_id: '',
+        payment_type: '',
+        amount: '',
+        description: ''
+    });
+    
+    const balance = 0; // calculate if needed, for now 0
 
     const handlePayment = (e: React.FormEvent) => {
         e.preventDefault();
-        // submit logic here
+        post('/reports/new/supplier-payment-entry', {
+            onSuccess: () => {
+                reset('amount', 'description');
+            }
+        });
     };
 
     return (
@@ -57,21 +62,23 @@ export default function SupplierPaymentEntry() {
                                 <label className="text-sm font-semibold text-slate-700 mb-1 block">
                                     Supplier <span className="text-red-500">*</span>
                                 </label>
-                                <select value={supplier} onChange={e => setSupplier(e.target.value)} required
+                                <select value={data.supplier_id} onChange={e => setData('supplier_id', e.target.value)} required
                                     className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
                                     <option value="">Please Select</option>
-                                    {SUPPLIERS.map(s => <option key={s} value={s}>{s}</option>)}
+                                    {suppliers.map((s: any) => <option key={s.id} value={s.id}>{s.supplier_name}</option>)}
                                 </select>
+                                {errors.supplier_id && <div className="text-red-500 text-xs mt-1">{errors.supplier_id}</div>}
                             </div>
                             <div>
                                 <label className="text-sm font-semibold text-slate-700 mb-1 block">
                                     Payment Type <span className="text-red-500">*</span>
                                 </label>
-                                <select value={paymentType} onChange={e => setPaymentType(e.target.value)} required
+                                <select value={data.payment_type} onChange={e => setData('payment_type', e.target.value)} required
                                     className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
                                     <option value="">Please Select</option>
                                     {PAYMENT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                                 </select>
+                                {errors.payment_type && <div className="text-red-500 text-xs mt-1">{errors.payment_type}</div>}
                             </div>
                         </div>
 
@@ -80,9 +87,10 @@ export default function SupplierPaymentEntry() {
                             <label className="text-sm font-semibold text-slate-700 mb-1 block">
                                 Amount <span className="text-red-500">*</span>
                             </label>
-                            <input type="number" value={amount} onChange={e => setAmount(e.target.value)} required
+                            <input type="number" value={data.amount} onChange={e => setData('amount', e.target.value)} required
                                 placeholder="Enter Amount"
                                 className="w-full md:w-1/2 border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                            {errors.amount && <div className="text-red-500 text-xs mt-1">{errors.amount}</div>}
                         </div>
 
                         {/* balance */}
@@ -93,16 +101,17 @@ export default function SupplierPaymentEntry() {
                         {/* description */}
                         <div>
                             <label className="text-sm font-semibold text-slate-700 mb-1 block">Description</label>
-                            <input type="text" value={description} onChange={e => setDescription(e.target.value)}
+                            <input type="text" value={data.description} onChange={e => setData('description', e.target.value)}
                                 placeholder="Enter Description"
                                 className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                            {errors.description && <div className="text-red-500 text-xs mt-1">{errors.description}</div>}
                         </div>
 
                         {/* submit */}
                         <div className="flex justify-end">
-                            <button type="submit"
-                                className="bg-[#162a5b] hover:bg-[#1e3a7b] text-white text-sm font-bold px-8 py-2.5 rounded-lg transition-colors">
-                                Payment
+                            <button type="submit" disabled={processing}
+                                className="bg-[#162a5b] hover:bg-[#1e3a7b] disabled:opacity-50 text-white text-sm font-bold px-8 py-2.5 rounded-lg transition-colors">
+                                {processing ? 'Processing...' : 'Payment'}
                             </button>
                         </div>
                     </form>
@@ -127,10 +136,10 @@ export default function SupplierPaymentEntry() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {LAST_TEN.length === 0 ? (
+                                {lastTen.length === 0 ? (
                                     <tr><td colSpan={6} className="text-center py-10 text-slate-400 text-sm">No transactions found</td></tr>
                                 ) : (
-                                    LAST_TEN.map((t, i) => (
+                                    lastTen.map((t: any, i: number) => (
                                         <tr key={t.sr} className={`border-b border-slate-100 ${i % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}>
                                             <td className="px-4 py-2.5 text-slate-500 text-xs">{t.sr}</td>
                                             <td className="px-4 py-2.5 text-slate-700">{t.supplier_name}</td>

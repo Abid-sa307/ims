@@ -14,9 +14,16 @@ class SalesInvoice extends Model
         'total_amount',
         'tax_amount',
         'discount_amount',
+        'total_tax_amount',
+        'cgst_amount',
+        'sgst_amount',
+        'igst_amount',
+        'utgst_amount',
+        'additional_charges',
         'grand_total',
         'status',
         'remarks',
+        'is_auto_approved',
     ];
 
     public function customer()

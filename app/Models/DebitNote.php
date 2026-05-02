@@ -21,7 +21,8 @@ class DebitNote extends Model
         'total_tax_amt', 
         'additional_charges', 
         'grand_total',
-        'reason'
+        'reason',
+        'amount'
     ];
 
     public function purchaseOrder()

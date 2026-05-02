@@ -17,7 +17,7 @@ class ItemSupplierMappingController extends Controller
     {
         return Inertia::render('Inventory/ItemSupplierMapping', [
             'profiles' => ItemSupplierProfile::with(['location', 'warehouse', 'supplier', 'category', 'item'])->get(),
-            'locations' => Location::all(),
+            'locations' => Location::where('location_type', '!=', 'Customer')->get(),
             'warehouses' => Warehouse::all(),
             'suppliers' => Supplier::all(),
             'categories' => ItemCategory::all(),

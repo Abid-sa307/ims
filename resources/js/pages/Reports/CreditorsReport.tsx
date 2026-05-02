@@ -13,14 +13,10 @@ interface Row { id: number; creditor: string; amount: number; }
 type SortKey = keyof Row;
 type SortDir = 'asc' | 'desc' | null;
 
-const DEMO: Row[] = [
-    { id: 1, creditor: 'LOCAL SUPPLIER', amount: 303 },
-];
 
-const CREDITORS = Array.from(new Set(DEMO.map(r => r.creditor)));
 
-export default function CreditorsReport() {
-    const [creditorFilter, setCreditorFilter] = useState('');
+export default function CreditorsReport({ reportData = [], creditors = [], filters = {} }: any) {
+    const [creditorFilter, setCreditorFilter] = useState(filters.creditorFilter || '');
     const [applied, setApplied] = useState(true);
     const [globalFilter, setGlobalFilter] = useState('');
     const [sortKey, setSortKey] = useState<SortKey>('id');
@@ -30,8 +26,8 @@ export default function CreditorsReport() {
 
     const data = useMemo(() => {
         if (!applied) return [];
-        return DEMO.filter(r => !creditorFilter || r.creditor === creditorFilter);
-    }, [applied, creditorFilter]);
+        return reportData;
+    }, [applied, reportData]);
 
     const filtered = useMemo(() => {
         if (!globalFilter) return data;
@@ -73,9 +69,11 @@ export default function CreditorsReport() {
                         <select value={creditorFilter} onChange={e => setCreditorFilter(e.target.value)}
                             className="border border-slate-300 rounded px-2 py-1.5 text-sm min-w-[140px] bg-white">
                             <option value="">None Selected</option>
-                            {CREDITORS.map(c => <option key={c} value={c}>{c}</option>)}
+                            {creditors.map((c: string) => <option key={c} value={c}>{c}</option>)}
                         </select>
-                        <button onClick={() => { setApplied(true); setPage(1); }}
+                        <button onClick={() => {
+                            window.location.href = `/reports/new/creditors-report?creditorFilter=${creditorFilter}`;
+                        }}
                             className="flex items-center gap-1.5 bg-[#162a5b] hover:bg-[#1e3a7b] text-white text-sm font-semibold px-4 py-1.5 rounded transition-colors">
                             <Search className="size-4" /> Search
                         </button>

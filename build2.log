@@ -1,0 +1,65 @@
+npm warn Unknown project config "public-hoist-pattern". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+> build
+> vite build
+
+[36mvite v7.3.1 [32mbuilding client environment for production...[36m[39m
+[plugin @laravel/vite-plugin-wayfinder] Types generated for actions, routes, form variants
+transforming...
+[32m✓[39m 6 modules transformed.
+[31m✗[39m Build failed in 45.38s
+[31merror during build:
+[31m[vite:react-babel] C:\laragon\www\ims\resources\js\pages\Sales\GenerateInvoice.tsx: Unexpected token (2:0)
+
+[0m [90m 1 |[31m [36mimport[31m { [33mHead[31m[33m,[31m [33mLink[31m[33m,[31m useForm[33m,[31m usePage } [36mfrom[31m [32m'@inertiajs/react'[31m[33m;[31m
+[31m[1m>[22m[31m[90m 2 |[31m [33m...[31m
+ [90m   |[31m [31m[1m^[22m[31m
+ [90m 3 |[31m [36mimport[31m { [33mCalendar[31m[33m,[31m [33mMessageSquare[31m[33m,[31m [33mPlusCircle[31m[33m,[31m [33mTrash2[31m[33m,[31m [33mList[31m[33m,[31m [33mSearch[31m[33m,[31m [33mZap[31m[33m,[31m [33mPrinter[31m } [36mfrom[31m [32m'lucide-react'[31m[33m;[31m
+ [90m 4 |[31m [36mimport[31m { useState[33m,[31m useEffect[33m,[31m useMemo } [36mfrom[31m [32m'react'[31m[33m;[31m
+ [90m 5 |[31m [36mimport[31m { cn } [36mfrom[31m [32m'@/lib/utils'[31m[33m;[31m[0m[31m
+file: [36mC:/laragon/www/ims/resources/js/pages/Sales/GenerateInvoice.tsx:2:0[31m
+    at constructor (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:365:19)
+    at TypeScriptParserMixin.raise (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:6599:19)
+    at TypeScriptParserMixin.unexpected (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:6619:16)
+    at TypeScriptParserMixin.parseExprAtom (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:11442:22)
+    at TypeScriptParserMixin.parseExprAtom (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:4764:20)
+    at TypeScriptParserMixin.parseExprSubscripts (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:11081:23)
+    at TypeScriptParserMixin.parseUpdate (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:11066:21)
+    at TypeScriptParserMixin.parseMaybeUnary (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:11046:23)
+    at TypeScriptParserMixin.parseMaybeUnary (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:9837:18)
+    at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:10899:61)
+    at TypeScriptParserMixin.parseExprOps (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:10904:23)
+    at TypeScriptParserMixin.parseMaybeConditional (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:10881:23)
+    at TypeScriptParserMixin.parseMaybeAssign (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:10831:21)
+    at TypeScriptParserMixin.parseMaybeAssign (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:9786:20)
+    at TypeScriptParserMixin.parseExpressionBase (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:10784:23)
+    at C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:10780:39
+    at TypeScriptParserMixin.allowInAnd (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:12421:16)
+    at TypeScriptParserMixin.parseExpression (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:10780:17)
+    at TypeScriptParserMixin.parseStatementContent (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:12895:23)
+    at TypeScriptParserMixin.parseStatementContent (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:9508:18)
+    at TypeScriptParserMixin.parseStatementLike (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:12767:17)
+    at TypeScriptParserMixin.parseModuleItem (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:12744:17)
+    at TypeScriptParserMixin.parseBlockOrModuleBlockBody (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:13316:36)
+    at TypeScriptParserMixin.parseBlockBody (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:13309:10)
+    at TypeScriptParserMixin.parseProgram (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:12622:10)
+    at TypeScriptParserMixin.parseTopLevel (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:12612:25)
+    at TypeScriptParserMixin.parse (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:14488:25)
+    at TypeScriptParserMixin.parse (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:10126:18)
+    at parse (C:\laragon\www\ims\node_modules\@babel\parser\lib\index.js:14522:38)
+    at parser (C:\laragon\www\ims\node_modules\@babel\core\lib\parser\index.js:41:34)
+    at parser.next (<anonymous>)
+    at normalizeFile (C:\laragon\www\ims\node_modules\@babel\core\lib\transformation\normalize-file.js:64:37)
+    at normalizeFile.next (<anonymous>)
+    at run (C:\laragon\www\ims\node_modules\@babel\core\lib\transformation\index.js:22:50)
+    at run.next (<anonymous>)
+    at transform (C:\laragon\www\ims\node_modules\@babel\core\lib\transform.js:22:33)
+    at transform.next (<anonymous>)
+    at step (C:\laragon\www\ims\node_modules\gensync\index.js:261:32)
+    at evaluateAsync (C:\laragon\www\ims\node_modules\gensync\index.js:291:5)
+    at C:\laragon\www\ims\node_modules\gensync\index.js:93:9
+    at new Promise (<anonymous>)
+    at async (C:\laragon\www\ims\node_modules\gensync\index.js:92:14)
+    at stopHiding - secret - don't use this - v1 (C:\laragon\www\ims\node_modules\@babel\core\lib\errors\rewrite-stack-trace.js:47:12)
+    at Module.transformAsync (C:\laragon\www\ims\node_modules\@babel\core\lib\transform.js:43:77)
+    at Object.handler (file:///C:/laragon/www/ims/node_modules/@vitejs/plugin-react/dist/index.js:206:46)[39m

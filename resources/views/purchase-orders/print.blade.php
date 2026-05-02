@@ -154,17 +154,17 @@
                 <th>Taxable Amt</th>
                 <th>CESS</th>
                 <th>Tax(%)</th>
-                <th>SGST</th>
-                <th>CGST</th>
+                @if($po->igst_amount > 0)
+                    <th>IGST</th>
+                @else
+                    <th>SGST</th>
+                    <th>CGST</th>
+                @endif
                 <th>Total</th>
             </tr>
         </thead>
         <tbody>
             @foreach($po->items as $index => $item)
-            @php
-                $cgst = $item->tax_amount / 2;
-                $sgst = $item->tax_amount / 2;
-            @endphp
             <tr>
                 <td>{{ $index + 1 }}</td>
                 <td class="text-left" style="width: 151px;">{{ $item->item->item_name }}</td>
@@ -176,8 +176,12 @@
                 <td>{{ number_format($item->taxable_amount, 2) }}</td>
                 <td>{{ number_format($item->cess_amount, 2) }}</td>
                 <td>{{ number_format($item->tax_percent, 2) }}</td>
-                <td>{{ number_format($sgst, 2) }}</td>
-                <td>{{ number_format($cgst, 2) }}</td>
+                @if($po->igst_amount > 0)
+                    <td>{{ number_format($item->igst_amount, 2) }}</td>
+                @else
+                    <td>{{ number_format($item->sgst_amount, 2) }}</td>
+                    <td>{{ number_format($item->cgst_amount, 2) }}</td>
+                @endif
                 <td>{{ number_format($item->total_amount, 2) }}</td>
             </tr>
             @endforeach
@@ -209,8 +213,12 @@
                 <td class="bold">{{ number_format($po->items->sum('taxable_amount'), 2) }}</td>
                 <td class="bold">-</td>
                 <td class="bold">-</td>
-                <td class="bold">{{ number_format($po->total_tax_amount / 2, 2) }}</td>
-                <td class="bold">{{ number_format($po->total_tax_amount / 2, 2) }}</td>
+                @if($po->igst_amount > 0)
+                    <td class="bold" colspan="1">{{ number_format($po->igst_amount, 2) }}</td>
+                @else
+                    <td class="bold">{{ number_format($po->sgst_amount, 2) }}</td>
+                    <td class="bold">{{ number_format($po->cgst_amount, 2) }}</td>
+                @endif
                 <td class="bold" style="font-size: 12px;">{{ number_format($po->grand_total, 2) }}</td>
             </tr>
         </tbody>
@@ -227,8 +235,12 @@
                 <thead>
                     <tr style="background-color: #f9f9f9;">
                         <th>Rate</th>
-                        <th>CGST</th>
-                        <th>SGST</th>
+                        @if($po->igst_amount > 0)
+                            <th>IGST</th>
+                        @else
+                            <th>CGST</th>
+                            <th>SGST</th>
+                        @endif
                         <th>Quantity</th>
                         <th>Gross</th>
                     </tr>
@@ -238,16 +250,24 @@
                     @foreach($groupedTaxes as $percent => $items)
                     <tr>
                         <td>{{ number_format($percent, 2) }}</td>
-                        <td>{{ number_format($items->sum('tax_amount') / 2, 2) }}</td>
-                        <td>{{ number_format($items->sum('tax_amount') / 2, 2) }}</td>
+                        @if($po->igst_amount > 0)
+                            <td>{{ number_format($items->sum('igst_amount'), 2) }}</td>
+                        @else
+                            <td>{{ number_format($items->sum('cgst_amount'), 2) }}</td>
+                            <td>{{ number_format($items->sum('sgst_amount'), 2) }}</td>
+                        @endif
                         <td>{{ number_format($items->sum('qty'), 2) }}</td>
                         <td>{{ number_format($items->sum('taxable_amount'), 2) }}</td>
                     </tr>
                     @endforeach
                     <tr class="bold">
                         <td>Total</td>
-                        <td>{{ number_format($po->total_tax_amount / 2, 2) }}</td>
-                        <td>{{ number_format($po->total_tax_amount / 2, 2) }}</td>
+                        @if($po->igst_amount > 0)
+                            <td>{{ number_format($po->igst_amount, 2) }}</td>
+                        @else
+                            <td>{{ number_format($po->cgst_amount, 2) }}</td>
+                            <td>{{ number_format($po->sgst_amount, 2) }}</td>
+                        @endif
                         <td>{{ number_format($po->items->sum('qty'), 2) }}</td>
                         <td>{{ number_format($po->items->sum('taxable_amount'), 2) }}</td>
                     </tr>

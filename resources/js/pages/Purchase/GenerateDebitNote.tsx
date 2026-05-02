@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Trash2, List, Calendar, FileText, IndianRupee } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -61,7 +61,31 @@ export default function GenerateDebitNote() {
             }
         ]
     });
+    const filteredSuppliers = useMemo(() => {
+        if (!data.location_id) return [];
+        
+        const loc = locations.find((l: any) => l.id.toString() === data.location_id.toString());
+        if (!loc) return [];
 
+        const allottedIds = Array.isArray(loc.allotted_supplier_ids) ? loc.allotted_supplier_ids.map((id: any) => id.toString()) : [];
+        if (loc.supplier_id) allottedIds.push(loc.supplier_id.toString());
+
+        return suppliers.filter((s: any) => 
+            s.location_id?.toString() === data.location_id.toString() || 
+            allottedIds.includes(s.id.toString())
+        );
+    }, [data.location_id, suppliers, locations]);
+
+    const filteredPurchaseOrders = useMemo(() => {
+        let filtered = purchaseOrders;
+        if (data.location_id) {
+            filtered = filtered.filter((po: any) => po.location_id?.toString() === data.location_id.toString());
+        }
+        if (data.supplier_id) {
+            filtered = filtered.filter((po: any) => po.supplier_id?.toString() === data.supplier_id.toString());
+        }
+        return filtered;
+    }, [data.location_id, data.supplier_id, purchaseOrders]);
     // Helper to calculate totals
     useEffect(() => {
         let tBase = 0;
@@ -148,11 +172,11 @@ export default function GenerateDebitNote() {
                 discount_percent: pi.discount_percent,
                 discount_amount: 0,
                 taxable_amount: 0,
-                cess_percent: pi.cess_percent,
+                cess_percent: pi.cess_percent || 0,
                 cess_amount: 0,
-                sgst_percent: pi.tax_percent / 2, // Assuming SGST/CGST split
+                sgst_percent: pi.sgst_percent || (pi.tax_percent ? pi.tax_percent / 2 : 0),
                 sgst_amount: 0,
-                cgst_percent: pi.tax_percent / 2,
+                cgst_percent: pi.cgst_percent || (pi.tax_percent ? pi.tax_percent / 2 : 0),
                 cgst_amount: 0,
                 service_charge_percent: 0,
                 service_charge_amount: 0,
@@ -179,6 +203,19 @@ export default function GenerateDebitNote() {
     const handleItemChange = (index: number, field: string, value: any) => {
         const newItems = [...data.items];
         newItems[index] = { ...newItems[index], [field]: value };
+        
+        if (field === 'item_id' && value) {
+            const selectedItem = allItems?.find((i: any) => i.id.toString() === value.toString());
+            if (selectedItem) {
+                newItems[index].unit_price = selectedItem.price || 0;
+                newItems[index].uom = selectedItem.uom || '';
+                newItems[index].cess_percent = selectedItem.cess_percent || 0;
+                const totalTax = selectedItem.tax_percent || 0;
+                newItems[index].sgst_percent = totalTax / 2;
+                newItems[index].cgst_percent = totalTax / 2;
+            }
+        }
+        
         setData('items', newItems);
     };
 
@@ -220,6 +257,15 @@ export default function GenerateDebitNote() {
                     </Link>
                 </div>
 
+                {Object.keys(errors).length > 0 && (
+                    <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6 text-red-700 text-sm">
+                        <p className="font-bold mb-1">Please fix the following errors:</p>
+                        <ul className="list-disc pl-5">
+                            {Object.values(errors).map((err: any, i) => <li key={i}>{err}</li>)}
+                        </ul>
+                    </div>
+                )}
+
                 {/* Primary Inputs */}
                 <div className="bg-white rounded-lg border shadow-sm p-6 mb-6">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -242,7 +288,7 @@ export default function GenerateDebitNote() {
                                 className="flex h-10 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm focus:ring-1 focus:ring-blue-500"
                             >
                                 <option value="">- Select Supplier -</option>
-                                {suppliers?.map((s: any) => <option key={s.id} value={s.id}>{s.supplier_name}</option>)}
+                                {filteredSuppliers?.map((s: any) => <option key={s.id} value={s.id}>{s.supplier_name}</option>)}
                             </select>
                         </div>
                         <div className="space-y-2">
@@ -253,7 +299,7 @@ export default function GenerateDebitNote() {
                                 className="flex h-10 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm focus:ring-1 focus:ring-blue-500"
                             >
                                 <option value="">-- Select Order Number --</option>
-                                {purchaseOrders?.map((po: any) => <option key={po.id} value={po.id}>{po.order_number}</option>)}
+                                {filteredPurchaseOrders?.map((po: any) => <option key={po.id} value={po.id}>{po.order_number}</option>)}
                             </select>
                         </div>
 

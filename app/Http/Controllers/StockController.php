@@ -9,10 +9,11 @@ use App\Models\ItemWarehouseMapping;
 use App\Models\Location;
 use App\Models\Warehouse;
 use App\Models\Uom;
+use App\Models\WastageEntry;
+use App\Models\MissingEntry;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
-use App\Models\WastageEntry;
 use App\Models\StockTransfer;
 use App\Models\StockTransferItem;
 use App\Models\StockAdjustment;
@@ -58,7 +59,7 @@ class StockController extends Controller
 
         return Inertia::render('Stock/CurrentStock', [
             'stockData' => $stockData,
-            'locations' => Location::all(),
+            'locations' => Location::where('location_type', '!=', 'Customer')->get(),
             'warehouses' => Warehouse::all(),
             'categories' => ItemCategory::all(),
             'subCategories' => ItemSubCategory::all(),
@@ -71,11 +72,15 @@ class StockController extends Controller
     public function wastageEntry()
     {
         return Inertia::render('Stock/WastageEntry', [
-            'locations' => Location::all(),
+            'locations' => Location::where('location_type', '!=', 'Customer')->get(),
             'warehouses' => Warehouse::all(),
             'categories' => ItemCategory::all(),
             'items' => Item::with('baseUnit')->get(),
             'uoms' => Uom::all(),
+            'recentEntries' => WastageEntry::with(['location', 'warehouse', 'item.baseUnit'])
+                ->latest()
+                ->take(10)
+                ->get(),
         ]);
     }
 
@@ -128,7 +133,7 @@ class StockController extends Controller
     public function stockTransfer()
     {
         return Inertia::render('Stock/StockTransfer', [
-            'locations' => Location::all(),
+            'locations' => Location::where('location_type', '!=', 'Customer')->get(),
             'warehouses' => Warehouse::all(),
             'categories' => ItemCategory::all(),
             'items' => Item::with(['baseUnit', 'itemWarehouseMappings'])->get(),
@@ -258,7 +263,7 @@ class StockController extends Controller
 
         return Inertia::render('Stock/StockTransferReport', [
             'reportData' => $reportData,
-            'locations' => Location::all(),
+            'locations' => Location::where('location_type', '!=', 'Customer')->get(),
             'warehouses' => Warehouse::all(),
             'categories' => ItemCategory::all(),
             'items' => Item::all(),
@@ -269,7 +274,7 @@ class StockController extends Controller
     public function stockAdjustment()
     {
         return Inertia::render('Stock/StockAdjustment', [
-            'locations' => Location::all(),
+            'locations' => Location::where('location_type', '!=', 'Customer')->get(),
             'warehouses' => Warehouse::all(),
             'categories' => ItemCategory::all(),
             'items' => Item::with(['baseUnit', 'itemWarehouseMappings'])->get(),
@@ -321,7 +326,7 @@ class StockController extends Controller
     public function physicalStockFrequency()
     {
         return Inertia::render('Stock/PhysicalStockFrequency', [
-            'locations' => Location::all(),
+            'locations' => Location::where('location_type', '!=', 'Customer')->get(),
             'warehouses' => Warehouse::all(),
             'categories' => ItemCategory::all(),
             'items' => Item::with(['itemWarehouseMappings', 'baseUnit'])->get(),
@@ -361,7 +366,7 @@ class StockController extends Controller
     public function physicalStockEntryReport()
     {
         return Inertia::render('Stock/PhysicalStockEntryReport', [
-            'locations' => Location::all(),
+            'locations' => Location::where('location_type', '!=', 'Customer')->get(),
             'warehouses' => Warehouse::all(),
             'items' => Item::with('baseUnit')->get(),
         ]);
@@ -393,5 +398,56 @@ class StockController extends Controller
         });
 
         return redirect()->back()->with('success', 'Physical stock entries recorded.');
+    }
+
+    public function missingEntry()
+    {
+        return Inertia::render('Stock/MissingEntry', [
+            'locations' => Location::where('location_type', '!=', 'Customer')->get(),
+            'warehouses' => Warehouse::all(),
+            'categories' => ItemCategory::all(),
+            'items' => Item::with('baseUnit')->get(),
+            'uoms' => Uom::all(),
+            'recentEntries' => MissingEntry::with(['location', 'warehouse', 'item.baseUnit'])
+                ->latest()
+                ->take(10)
+                ->get(),
+        ]);
+    }
+
+    public function storeMissingEntry(Request $request)
+    {
+        $validated = $request->validate([
+            'date' => 'required|date',
+            'location_id' => 'required|exists:locations,id',
+            'warehouse_id' => 'required|exists:warehouses,id',
+            'remarks' => 'nullable|string',
+            'items' => 'required|array',
+            'items.*.item_id' => 'required|exists:items,id',
+            'items.*.item_category_id' => 'required|exists:item_categories,id',
+            'items.*.uom_id' => 'required|exists:uoms,id',
+            'items.*.missing_quantity' => 'required|numeric|min:0',
+            'items.*.reason' => 'nullable|string',
+            'items.*.remarks' => 'nullable|string',
+        ]);
+
+        DB::transaction(function () use ($validated) {
+            foreach ($validated['items'] as $itemData) {
+                MissingEntry::create([
+                    'date' => $validated['date'],
+                    'location_id' => $validated['location_id'],
+                    'warehouse_id' => $validated['warehouse_id'],
+                    'remarks' => $validated['remarks'],
+                    'item_category_id' => $itemData['item_category_id'],
+                    'item_id' => $itemData['item_id'],
+                    'uom_id' => $itemData['uom_id'],
+                    'missing_quantity' => $itemData['missing_quantity'],
+                    'reason' => $itemData['reason'] ?? null,
+                    'remarks' => $itemData['remarks'] ?? null,
+                ]);
+            }
+        });
+
+        return redirect()->back()->with('success', 'Missing entries recorded successfully.');
     }
 }

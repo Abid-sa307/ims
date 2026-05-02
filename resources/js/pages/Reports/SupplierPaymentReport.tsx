@@ -22,20 +22,16 @@ interface Row {
 type SortKey = keyof Row;
 type SortDir = 'asc' | 'desc' | null;
 
-const DEMO: Row[] = [
-    { id: 1, name: 'LOCAL SUPPLIER', description: '', date: '14-04-2026 02:56:39 PM', created_by: 'Admin', payment_mode: 'Cash', credit_amount: 5636 },
-    { id: 2, name: 'LOCAL SUPPLIER', description: '', date: '14-04-2026 03:03:13 PM', created_by: 'Admin', payment_mode: 'Card Payment', credit_amount: 2 },
-    { id: 3, name: 'LOCAL SUPPLIER', description: '', date: '14-04-2026 03:20:40 PM', created_by: 'Admin', payment_mode: 'Phone Pay', credit_amount: 303 },
-];
+
 
 const fmt = (d: Date) => d.toISOString().split('T')[0];
 const today = new Date();
 const ago = new Date(today); ago.setDate(today.getDate() - 30);
 
-export default function SupplierPaymentReport() {
-    const [dateFrom, setDateFrom] = useState(fmt(ago));
-    const [dateTo, setDateTo] = useState(fmt(today));
-    const [supplierFilter, setSupplierFilter] = useState('');
+export default function SupplierPaymentReport({ reportData = [], suppliers = [], filters = {} }: any) {
+    const [dateFrom, setDateFrom] = useState(filters.date_from || fmt(ago));
+    const [dateTo, setDateTo] = useState(filters.date_to || fmt(today));
+    const [supplierFilter, setSupplierFilter] = useState(filters.supplier_id || '');
     const [applied, setApplied] = useState(true);
     const [globalFilter, setGlobalFilter] = useState('');
     const [sortKey, setSortKey] = useState<SortKey>('date');
@@ -43,12 +39,10 @@ export default function SupplierPaymentReport() {
     const [pageSize, setPageSize] = useState(50);
     const [page, setPage] = useState(1);
 
-    const suppliers = Array.from(new Set(DEMO.map(r => r.name)));
-
     const data = useMemo(() => {
         if (!applied) return [];
-        return DEMO.filter(r => !supplierFilter || r.name === supplierFilter);
-    }, [applied, supplierFilter]);
+        return reportData;
+    }, [applied, reportData]);
 
     const filtered = useMemo(() => {
         if (!globalFilter) return data;
@@ -108,7 +102,9 @@ export default function SupplierPaymentReport() {
                                 {suppliers.map(s => <option key={s} value={s}>{s}</option>)}
                             </select>
                         </div>
-                        <button onClick={() => { setApplied(true); setPage(1); }}
+                        <button onClick={() => {
+                            window.location.href = `/reports/new/supplier-payment?date_from=${dateFrom}&date_to=${dateTo}&supplier_id=${supplierFilter}`;
+                        }}
                             className="flex items-center gap-1.5 bg-[#162a5b] hover:bg-[#1e3a7b] text-white text-sm font-semibold px-4 py-1.5 rounded transition-colors">
                             <Search className="size-4" /> Search
                         </button>

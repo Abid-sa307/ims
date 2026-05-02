@@ -19,19 +19,15 @@ interface Row {
 type SortKey = 'id' | 'supplier' | 'product' | 'min_price' | 'max_price';
 type SortDir = 'asc' | 'desc' | null;
 
-const DEMO: Row[] = [
-    { id: 1, supplier: 'LOCAL SUPPLIER', product: 'Resistance Bands', min_price: 400, max_price: 400, po_history: [{ no: 1, supplier: 'LOCAL SUPPLIER', po_date: '14-Apr-2026', order_number: 'ORD2', qty: 10, price: 400 }] },
-    { id: 2, supplier: 'LOCAL SUPPLIER', product: 'Treadmills', min_price: 52, max_price: 52, po_history: [{ no: 1, supplier: 'LOCAL SUPPLIER', po_date: '14-Apr-2026', order_number: 'ORD1', qty: 10, price: 52 }] },
-    { id: 3, supplier: 'LOCAL SUPPLIER', product: 'Water Bottles', min_price: 555, max_price: 555, po_history: [{ no: 1, supplier: 'LOCAL SUPPLIER', po_date: '14-Apr-2026', order_number: 'ORD2', qty: 10, price: 555 }] },
-];
+
 
 const fmt = (d: Date) => d.toISOString().split('T')[0];
 const today = new Date(); const ago = new Date(today); ago.setDate(today.getDate() - 30);
 
-export default function PriceDeviationReport() {
-    const [dateFrom, setDateFrom] = useState(fmt(ago));
-    const [dateTo, setDateTo] = useState(fmt(today));
-    const [supplierFilter, setSupplierFilter] = useState('1 Selected');
+export default function PriceDeviationReport({ reportData = [], suppliers = [], filters = {} }: any) {
+    const [dateFrom, setDateFrom] = useState(filters.date_from || fmt(ago));
+    const [dateTo, setDateTo] = useState(filters.date_to || fmt(today));
+    const [supplierFilter, setSupplierFilter] = useState(filters.supplier_name || '1 Selected');
     const [categoryFilter, setCategoryFilter] = useState('');
     const [itemFilter, setItemFilter] = useState('');
     const [applied, setApplied] = useState(true);
@@ -48,7 +44,7 @@ export default function PriceDeviationReport() {
         return next;
     });
 
-    const data = useMemo(() => applied ? DEMO : [], [applied]);
+    const data = useMemo(() => applied ? reportData : [], [applied, reportData]);
     const filtered = useMemo(() => {
         if (!globalFilter) return data;
         const q = globalFilter.toLowerCase();
@@ -98,9 +94,8 @@ export default function PriceDeviationReport() {
                             <span className="text-xs font-semibold text-slate-500">Supplier:</span>
                             <select value={supplierFilter} onChange={e => setSupplierFilter(e.target.value)}
                                 className="border border-slate-300 rounded px-2 py-1 text-xs min-w-[110px] bg-white">
-                                <option>None Selected</option>
-                                <option>1 Selected</option>
-                                <option>LOCAL SUPPLIER</option>
+                                <option value="1 Selected">1 Selected</option>
+                                {suppliers.map((s: string) => <option key={s} value={s}>{s}</option>)}
                             </select>
                         </div>
                         <div className="flex items-center gap-1.5">
@@ -117,7 +112,9 @@ export default function PriceDeviationReport() {
                                 <option value="">None Selected</option>
                             </select>
                         </div>
-                        <button onClick={() => { setApplied(true); setPage(1); }}
+                        <button onClick={() => {
+                            window.location.href = `/reports/new/price-deviation?date_from=${dateFrom}&date_to=${dateTo}&supplier_name=${supplierFilter}`;
+                        }}
                             className="flex items-center gap-1.5 bg-[#162a5b] hover:bg-[#1e3a7b] text-white text-sm font-semibold px-4 py-1.5 rounded transition-colors">
                             <Search className="size-4" /> Search
                         </button>

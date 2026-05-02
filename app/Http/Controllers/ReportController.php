@@ -44,7 +44,7 @@ class ReportController extends Controller
 
         return Inertia::render('Reports/Purchase/OrderSummary', [
             'reportData' => $reportData,
-            'locations' => Location::select('id', 'location_legal_name')->get(),
+            'locations' => Location::where('location_type', 'HQ')->select('id', 'location_legal_name')->get(),
             'suppliers' => \App\Models\Supplier::select('id', 'supplier_name')->get(),
             'filters' => $request->all(),
         ]);
@@ -168,7 +168,7 @@ class ReportController extends Controller
         return Inertia::render('Reports/Sales/SalesSummary', [
             'reportData' => $query->paginate(15),
             'customers' => Customer::select('id', 'customer_name')->get(),
-            'locations' => Location::select('id', 'location_legal_name')->get(),
+            'locations' => Location::where('location_type', '!=', 'Customer')->select('id', 'location_legal_name')->get(),
             'filters' => $request->all(),
         ]);
     }
@@ -345,7 +345,7 @@ class ReportController extends Controller
 
         return Inertia::render('Reports/Stock/StockListing', [
             'stockData' => $stockData,
-            'locations' => Location::select('id', 'location_legal_name')->get(),
+            'locations' => Location::where('location_type', '!=', 'Customer')->select('id', 'location_legal_name')->get(),
             'warehouses' => Warehouse::select('id', 'name')->get(),
             'categories' => ItemCategory::all(),
             'filters' => $request->all(),
@@ -367,7 +367,236 @@ class ReportController extends Controller
 
         return Inertia::render('Reports/Stock/StockValuation', [
             'reportData' => $query->get(),
-            'locations' => Location::all(),
+            'locations' => Location::where('location_type', '!=', 'Customer')->get(),
+            'filters' => $request->all(),
+        ]);
+    }
+
+    // --- New Reports Added ---
+
+    public function newSupplierPaymentReport(Request $request)
+    {
+        $query = \App\Models\SupplierPayment::with('supplier')->latest('payment_date');
+        
+        if ($request->filled('date_from')) {
+            $query->whereDate('payment_date', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('payment_date', '<=', $request->date_to);
+        }
+        if ($request->filled('supplier_id')) {
+            $query->where('supplier_id', $request->supplier_id);
+        }
+        
+        $payments = $query->get()->map(function ($p) {
+            return [
+                'id' => $p->id,
+                'name' => $p->supplier?->supplier_name ?? '—',
+                'description' => $p->notes ?? '',
+                'date' => \Carbon\Carbon::parse($p->payment_date)->format('d-m-Y h:i:s A'),
+                'created_by' => 'Admin',
+                'payment_mode' => $p->payment_method,
+                'credit_amount' => (float)$p->amount,
+            ];
+        });
+
+        return Inertia::render('Reports/SupplierPaymentReport', [
+            'reportData' => $payments,
+            'suppliers' => \App\Models\Supplier::select('supplier_name')->distinct()->pluck('supplier_name'),
+            'filters' => $request->all(),
+        ]);
+    }
+
+    public function newSupplierPaymentEntry(Request $request)
+    {
+        $lastTen = \App\Models\SupplierPayment::with('supplier')->latest()->take(10)->get()->map(function ($p, $i) {
+            return [
+                'sr' => $i + 1,
+                'supplier_name' => $p->supplier?->supplier_name ?? '—',
+                'payment_type' => $p->payment_method,
+                'amount' => (float)$p->amount,
+                'created_by' => 'Admin',
+                'created_date' => \Carbon\Carbon::parse($p->created_at)->format('d-m-Y h:i A'),
+            ];
+        });
+
+        return Inertia::render('Reports/SupplierPaymentEntry', [
+            'lastTen' => $lastTen,
+            'suppliers' => \App\Models\Supplier::select('id', 'supplier_name')->get(),
+        ]);
+    }
+
+    public function storeNewSupplierPayment(Request $request)
+    {
+        $validated = $request->validate([
+            'supplier_id' => 'required|exists:suppliers,id',
+            'payment_type' => 'required|string',
+            'amount' => 'required|numeric|min:0.01',
+            'description' => 'nullable|string',
+        ]);
+
+        \App\Models\SupplierPayment::create([
+            'payment_number'    => 'PAY-' . date('Ymd') . '-' . str_pad(\App\Models\SupplierPayment::count() + 1, 4, '0', STR_PAD_LEFT),
+            'payment_date'      => now(),
+            'supplier_id'       => $validated['supplier_id'],
+            'amount'            => $validated['amount'],
+            'payment_method'    => $validated['payment_type'],
+            'notes'             => $validated['description'] ?? null,
+            'status'            => 'completed',
+        ]);
+
+        return redirect()->route('reports.new.supplier-payment-entry')->with('success', 'Payment recorded successfully.');
+    }
+
+    public function newPriceDeviation(Request $request)
+    {
+        // Get all items that have purchase orders, with min/max price
+        $items = DB::table('purchase_order_items')
+            ->join('items', 'purchase_order_items.item_id', '=', 'items.id')
+            ->join('purchase_orders', 'purchase_order_items.purchase_order_id', '=', 'purchase_orders.id')
+            ->join('suppliers', 'purchase_orders.supplier_id', '=', 'suppliers.id')
+            ->select(
+                'items.id as item_id',
+                'items.item_name',
+                'suppliers.supplier_name',
+                DB::raw('MIN(purchase_order_items.current_price) as min_price'),
+                DB::raw('MAX(purchase_order_items.current_price) as max_price')
+            );
+            
+        if ($request->filled('supplier_name') && $request->supplier_name != '1 Selected') {
+            $items->where('suppliers.supplier_name', $request->supplier_name);
+        }
+            
+        $items = $items->groupBy('items.id', 'items.item_name', 'suppliers.supplier_name')->get();
+
+        $poHistory = DB::table('purchase_order_items')
+            ->join('purchase_orders', 'purchase_order_items.purchase_order_id', '=', 'purchase_orders.id')
+            ->join('suppliers', 'purchase_orders.supplier_id', '=', 'suppliers.id')
+            ->select(
+                'purchase_order_items.item_id',
+                'suppliers.supplier_name',
+                'purchase_orders.po_date',
+                'purchase_orders.order_number',
+                'purchase_order_items.qty',
+                'purchase_order_items.current_price'
+            )
+            ->orderBy('purchase_orders.po_date', 'desc')
+            ->get()
+            ->groupBy('item_id');
+
+        $reportData = $items->map(function ($item, $index) use ($poHistory) {
+            $history = isset($poHistory[$item->item_id]) ? $poHistory[$item->item_id] : collect([]);
+            return [
+                'id' => $index + 1,
+                'supplier' => $item->supplier_name,
+                'product' => $item->item_name,
+                'min_price' => (float)$item->min_price,
+                'max_price' => (float)$item->max_price,
+                'po_history' => $history->map(function ($po, $i) {
+                    return [
+                        'no' => $i + 1,
+                        'supplier' => $po->supplier_name,
+                        'po_date' => \Carbon\Carbon::parse($po->po_date)->format('d-M-Y'),
+                        'order_number' => $po->order_number,
+                        'qty' => (float)$po->qty,
+                        'price' => (float)$po->current_price,
+                    ];
+                })->values()
+            ];
+        });
+
+        return Inertia::render('Reports/PriceDeviationReport', [
+            'reportData' => $reportData,
+            'filters' => $request->all(),
+            'suppliers' => \App\Models\Supplier::select('supplier_name')->distinct()->pluck('supplier_name'),
+        ]);
+    }
+
+    public function newCreditorsReport(Request $request)
+    {
+        $query = \App\Models\Supplier::select('id', 'supplier_name');
+        
+        if ($request->filled('creditorFilter')) {
+            $query->where('supplier_name', $request->creditorFilter);
+        }
+        
+        $reportData = $query->get()
+            ->map(function ($s) {
+                // simple calc: total POs - total Payments
+                $totalPo = \App\Models\PurchaseOrder::where('supplier_id', $s->id)->sum('grand_total');
+                $totalPaid = \App\Models\SupplierPayment::where('supplier_id', $s->id)->sum('amount');
+                return [
+                    'id' => $s->id,
+                    'creditor' => $s->supplier_name,
+                    'amount' => (float)($totalPo - $totalPaid)
+                ];
+            })->filter(function ($r) {
+                return $r['amount'] > 0;
+            })->values();
+
+        return Inertia::render('Reports/CreditorsReport', [
+            'reportData' => $reportData,
+            'creditors' => \App\Models\Supplier::select('supplier_name')->distinct()->pluck('supplier_name'),
+            'filters' => $request->all(),
+        ]);
+    }
+
+    public function newSupplierAccount(Request $request)
+    {
+        $supplierQuery = \App\Models\Supplier::query();
+        if ($request->filled('accountFilter')) {
+            $supplierQuery->where('supplier_name', $request->accountFilter);
+        }
+        
+        $suppliers = $supplierQuery->get();
+        $allTransactions = collect([]);
+
+        foreach ($suppliers as $s) {
+            $pos = \App\Models\PurchaseOrder::where('supplier_id', $s->id)
+                ->select('id', 'po_date as date', 'order_number as ref', 'grand_total as amount', DB::raw("'PO' as type"))
+                ->get();
+                
+            $payments = \App\Models\SupplierPayment::where('supplier_id', $s->id)
+                ->select('id', 'payment_date as date', 'payment_number as ref', 'amount', DB::raw("'Payment' as type"))
+                ->get();
+
+            $transactions = $pos->concat($payments)->sortBy('date')->values();
+            
+            $balance = 0;
+            foreach ($transactions as $t) {
+                if ($t->type === 'PO') {
+                    $credit = 0;
+                    $debit = (float)$t->amount;
+                    $balance += $debit;
+                } else {
+                    $credit = (float)$t->amount;
+                    $debit = 0;
+                    $balance -= $credit; // paying reduces balance
+                }
+                
+                $allTransactions->push([
+                    'id' => $t->id . '-' . $t->type,
+                    'date' => \Carbon\Carbon::parse($t->date)->format('d-m-Y h:i:s A'),
+                    'supplier_name' => $s->supplier_name,
+                    'description' => $t->ref,
+                    'created_by' => 'Admin',
+                    'credit' => $credit,
+                    'debit' => $debit,
+                    'balance' => $balance,
+                    'real_date' => $t->date // for final sorting if needed
+                ]);
+            }
+        }
+        
+        $allTransactions = $allTransactions->sortBy('real_date')->values()->map(function($t, $i) {
+            $t['id'] = $i + 1;
+            unset($t['real_date']);
+            return $t;
+        });
+
+        return Inertia::render('Reports/SupplierAccountReport', [
+            'reportData' => $allTransactions,
+            'suppliers' => \App\Models\Supplier::select('supplier_name')->distinct()->pluck('supplier_name'),
             'filters' => $request->all(),
         ]);
     }

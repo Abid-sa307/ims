@@ -22,6 +22,13 @@ interface Location {
     city: string | null;
     contact_number: string | null;
     email: string | null;
+    supplier_id: number | null;
+    customer_id: number | null;
+}
+
+interface Customer {
+    id: number;
+    customer_name: string;
 }
 
 interface Supplier {
@@ -65,7 +72,7 @@ function Field({ label, required, error, children }: { label: string; required?:
     );
 }
 
-export default function LocationMaster({ locations = [], suppliers = [] }: { locations: Location[]; suppliers: Supplier[] }) {
+export default function LocationMaster({ locations = [], suppliers = [], customers = [] }: { locations: Location[]; suppliers: Supplier[]; customers: Customer[] }) {
     const [viewMode, setViewMode] = useState<'list' | 'form'>('list');
     const [searchQuery, setSearchQuery] = useState('');
     const [isEditing, setIsEditing] = useState(false);
@@ -98,14 +105,15 @@ export default function LocationMaster({ locations = [], suppliers = [] }: { loc
         email_sales_order: false,
         invoice_cc_emails: [] as string[],
         supplier_id: '',
+        customer_id: '',
         default_warehouse_name: '',
         route: '',
         latitude: '',
         longitude: '',
         strict_permission_email_purchase_order: false,
         allow_email_notification_on_stock_transfer: false,
-        email_po_approval: '',
         email_so_approval: '',
+        allotted_supplier_ids: [] as number[],
     });
 
     // Auto-sync warehouse name with location legal name
@@ -132,7 +140,14 @@ export default function LocationMaster({ locations = [], suppliers = [] }: { loc
 
     const handleEdit = (location: any) => {
         const existing = Array.isArray(location.invoice_cc_emails) ? location.invoice_cc_emails : [];
-        setData({ ...data, ...location, invoice_cc_emails: existing });
+        setData({
+            ...data,
+            ...location,
+            supplier_id: location.supplier_id?.toString() || '',
+            customer_id: location.customer_id?.toString() || '',
+            invoice_cc_emails: existing,
+            allotted_supplier_ids: Array.isArray(location.allotted_supplier_ids) ? location.allotted_supplier_ids : []
+        });
         setCcEmails(existing); setCcEmailInput(''); setValidationErrors({});
         setIsEditing(true); setViewMode('form');
     };
@@ -462,6 +477,17 @@ export default function LocationMaster({ locations = [], suppliers = [] }: { loc
                                 {/* CUSTOMER */}
                                 {isCustomer && (
                                     <div className="max-w-xl space-y-5">
+                                        <div className="space-y-4">
+                                            <Field label="Customer Mapping">
+                                                <Select value={data.customer_id?.toString() || ""} onValueChange={v => setData('customer_id', v)}>
+                                                    <SelectTrigger className="border-gray-200 bg-gray-50 focus:bg-white"><SelectValue placeholder="-- Select Customer --" /></SelectTrigger>
+                                                    <SelectContent>
+                                                        {customers.map(c => <SelectItem key={c.id} value={c.id.toString()}>{c.customer_name}</SelectItem>)}
+                                                    </SelectContent>
+                                                </Select>
+                                            </Field>
+                                        </div>
+
                                         <div className="flex items-center justify-between p-4 rounded-xl border border-gray-100 bg-gray-50">
                                             <div>
                                                 <p className="text-sm font-bold text-gray-800">Email Sales Invoice to Customer</p>
@@ -506,14 +532,69 @@ export default function LocationMaster({ locations = [], suppliers = [] }: { loc
                                 {isHQ && (
                                     <div className="grid md:grid-cols-2 gap-8">
                                         <div className="space-y-5">
-                                            <Field label="Supplier Mapping">
-                                                <Select value={data.supplier_id} onValueChange={v => setData('supplier_id', v)}>
-                                                    <SelectTrigger className="border-gray-200 bg-gray-50 focus:bg-white"><SelectValue placeholder="-- None --" /></SelectTrigger>
-                                                    <SelectContent>
-                                                        {suppliers.map(s => <SelectItem key={s.id} value={s.id.toString()}>{s.supplier_name}</SelectItem>)}
-                                                    </SelectContent>
-                                                </Select>
-                                            </Field>
+                                            <div className="space-y-3">
+                                                <Label className="text-[12px] font-black text-gray-600 uppercase tracking-wide">Allotted Suppliers</Label>
+                                                <div className="bg-gray-50 border border-gray-100 rounded-xl p-4 space-y-3">
+                                                    <div className="relative">
+                                                        <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-gray-400" />
+                                                        <Input 
+                                                            placeholder="Search suppliers..." 
+                                                            className="pl-8 h-8 text-xs bg-white border-gray-200"
+                                                            onChange={(e) => {
+                                                                const q = e.target.value.toLowerCase();
+                                                                // We'll use a local state for filtering if needed, but for now just filter in render
+                                                                (window as any)._supplierSearch = q;
+                                                                const el = document.getElementById('supplier-list-container');
+                                                                if (el) {
+                                                                    const items = el.querySelectorAll('.supplier-checkbox-item');
+                                                                    items.forEach((item: any) => {
+                                                                        const name = item.getAttribute('data-name').toLowerCase();
+                                                                        item.style.display = name.includes(q) ? 'flex' : 'none';
+                                                                    });
+                                                                }
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <div id="supplier-list-container" className="grid grid-cols-1 gap-2 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
+                                                        {suppliers.map(s => (
+                                                            <label 
+                                                                key={s.id} 
+                                                                data-name={s.supplier_name}
+                                                                className="supplier-checkbox-item flex items-center gap-2 p-2 rounded-lg hover:bg-white border border-transparent hover:border-gray-100 cursor-pointer transition-all"
+                                                            >
+                                                                <input 
+                                                                    type="checkbox" 
+                                                                    className="size-4 rounded border-gray-300 text-[#162a5b] focus:ring-[#162a5b]"
+                                                                    checked={data.allotted_supplier_ids.includes(s.id)}
+                                                                    onChange={(e) => {
+                                                                        const checked = e.target.checked;
+                                                                        const updated = checked 
+                                                                            ? [...data.allotted_supplier_ids, s.id]
+                                                                            : data.allotted_supplier_ids.filter(id => id !== s.id);
+                                                                        setData('allotted_supplier_ids', updated);
+                                                                    }}
+                                                                />
+                                                                <span className="text-xs font-semibold text-gray-700">{s.supplier_name}</span>
+                                                            </label>
+                                                        ))}
+                                                    </div>
+                                                    {data.allotted_supplier_ids.length > 0 && (
+                                                        <div className="pt-2 border-t border-gray-100 mt-2">
+                                                            <p className="text-[10px] font-bold text-[#162a5b] uppercase tracking-wider mb-1">Selected: {data.allotted_supplier_ids.length}</p>
+                                                            <div className="flex flex-wrap gap-1">
+                                                                {data.allotted_supplier_ids.map(id => {
+                                                                    const s = suppliers.find(sup => sup.id === id);
+                                                                    return s ? (
+                                                                        <span key={id} className="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 text-[10px] font-bold border border-blue-100">
+                                                                            {s.supplier_name}
+                                                                        </span>
+                                                                    ) : null;
+                                                                })}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
 
                                             <div className="space-y-3 p-4 rounded-xl bg-gray-50 border border-gray-100">
                                                 <Label className="text-[12px] font-black text-gray-600 uppercase tracking-wide flex items-center gap-1.5">

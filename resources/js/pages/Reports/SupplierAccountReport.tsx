@@ -16,24 +16,22 @@ interface Row {
 type SortKey = keyof Row;
 type SortDir = 'asc' | 'desc' | null;
 
-const DEMO: Row[] = [
-    { id: 1, date: '14-04-2026 02:54:25 PM', supplier_name: 'LOCAL SUPPLIER', description: '', created_by: 'Admin', credit: 0, debit: 11269, balance: 11269 },
-    { id: 2, date: '14-04-2026 02:54:51 PM', supplier_name: 'LOCAL SUPPLIER', description: 'DN-000002', created_by: 'Admin', credit: 5635, debit: 0, balance: 5634 },
-    { id: 3, date: '14-04-2026 02:56:39 PM', supplier_name: 'LOCAL SUPPLIER', description: '', created_by: 'Admin', credit: 5636, debit: 0, balance: -2 },
-    { id: 4, date: '14-04-2026 03:03:13 PM', supplier_name: 'LOCAL SUPPLIER', description: '', created_by: 'Admin', credit: 2, debit: 0, balance: -4 },
-    { id: 5, date: '14-04-2026 03:14:32 PM', supplier_name: 'LOCAL SUPPLIER', description: '', created_by: 'Admin', credit: 0, debit: 614, balance: 610 },
-    { id: 6, date: '14-04-2026 03:14:54 PM', supplier_name: 'LOCAL SUPPLIER', description: 'DN-000003', created_by: 'Admin', credit: 307, debit: 0, balance: 303 },
-];
 
-const ACCOUNTS = Array.from(new Set(DEMO.map(r => r.supplier_name)));
 const fmt = (d: Date) => d.toISOString().split('T')[0];
 const today = new Date(); const ago = new Date(today); ago.setDate(today.getDate() - 30);
 
-export default function SupplierAccountReport() {
-    const [dateFrom, setDateFrom] = useState(fmt(ago));
-    const [dateTo, setDateTo] = useState(fmt(today));
-    const [accountFilter, setAccountFilter] = useState('LOCAL SUPPLIER');
-    const [applied, setApplied] = useState(true);
+interface Props {
+    reportData: Row[];
+    suppliers: any[];
+    filters: any;
+}
+
+export default function SupplierAccountReport({ reportData = [], suppliers = [], filters = {} }: Props) {
+    const [applied, setApplied] = useState(reportData.length > 0);
+    const [dateFrom, setDateFrom] = useState(filters.date_from || fmt(ago));
+    const [dateTo, setDateTo] = useState(filters.date_to || fmt(today));
+    const [accountFilter, setAccountFilter] = useState(filters.accountFilter || '');
+
     const [globalFilter, setGlobalFilter] = useState('');
     const [sortKey, setSortKey] = useState<SortKey>('date');
     const [sortDir, setSortDir] = useState<SortDir>('asc');
@@ -42,8 +40,8 @@ export default function SupplierAccountReport() {
 
     const data = useMemo(() => {
         if (!applied) return [];
-        return DEMO.filter(r => !accountFilter || r.supplier_name === accountFilter);
-    }, [applied, accountFilter]);
+        return reportData;
+    }, [applied, reportData]);
 
     const filtered = useMemo(() => {
         if (!globalFilter) return data;
@@ -101,14 +99,16 @@ export default function SupplierAccountReport() {
                                 <select value={accountFilter} onChange={e => setAccountFilter(e.target.value)}
                                     className="text-xs outline-none min-w-[140px] bg-transparent">
                                     <option value="">None Selected</option>
-                                    {ACCOUNTS.map(a => <option key={a} value={a}>{a}</option>)}
+                                    {suppliers.map((a: string) => <option key={a} value={a}>{a}</option>)}
                                 </select>
                                 {accountFilter && (
                                     <button onClick={() => setAccountFilter('')} className="text-slate-400 hover:text-slate-600 ml-1 text-xs">×</button>
                                 )}
                             </div>
                         </div>
-                        <button onClick={() => { setApplied(true); setPage(1); }}
+                        <button onClick={() => {
+                            window.location.href = `/reports/new/supplier-account?date_from=${dateFrom}&date_to=${dateTo}&accountFilter=${accountFilter}`;
+                        }}
                             className="flex items-center gap-1.5 bg-[#162a5b] hover:bg-[#1e3a7b] text-white text-sm font-semibold px-4 py-1.5 rounded transition-colors">
                             <Search className="size-4" /> Search
                         </button>

@@ -31,29 +31,48 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Purchase Management
     Route::get('purchase/generate-po', [\App\Http\Controllers\PurchaseOrderController::class, 'create'])->name('purchase.generate-po');
     Route::post('purchase/generate-po', [\App\Http\Controllers\PurchaseOrderController::class, 'store'])->name('purchase.generate-po.store');
+    Route::get('purchase/orders/{purchaseOrder}/edit', [\App\Http\Controllers\PurchaseOrderController::class, 'edit'])->name('purchase.orders.edit');
+    Route::put('purchase/orders/{purchaseOrder}', [\App\Http\Controllers\PurchaseOrderController::class, 'update'])->name('purchase.orders.update');
+    Route::delete('purchase/orders/{purchaseOrder}', [\App\Http\Controllers\PurchaseOrderController::class, 'destroy'])->name('purchase.orders.destroy');
+    Route::get('purchase/orders/{purchaseOrder}/review', [\App\Http\Controllers\PurchaseOrderController::class, 'reviewOrder'])->name('purchase.orders.review');
+    Route::post('purchase/reject-po/{purchaseOrder}', [\App\Http\Controllers\PurchaseOrderController::class, 'reject'])->name('purchase.reject-po');
     Route::get('purchase/orders/{purchaseOrder}/print', [\App\Http\Controllers\PurchaseOrderPrintController::class, 'print'])->name('purchase.orders.print');
     Route::get('purchase/summary', [\App\Http\Controllers\PurchaseOrderController::class, 'summary'])->name('purchase.summary');
     Route::get('purchase/approved-po', [\App\Http\Controllers\PurchaseOrderController::class, 'approvedPOs'])->name('purchase.approved-po');
     Route::post('purchase/approve-po/{purchaseOrder}', [\App\Http\Controllers\PurchaseOrderController::class, 'approve'])->name('purchase.approve-po');
     Route::get('purchase/send-po', [\App\Http\Controllers\PurchaseOrderController::class, 'sendPOs'])->name('purchase.send-po');
+    Route::get('purchase/orders/{purchaseOrder}/transmit', [\App\Http\Controllers\PurchaseOrderController::class, 'transmitOrder'])->name('purchase.orders.transmit');
     Route::post('purchase/send-po/{purchaseOrder}', [\App\Http\Controllers\PurchaseOrderController::class, 'send'])->name('purchase.send-po.submit');
     Route::get('purchase/auto-approved-po', [\App\Http\Controllers\PurchaseOrderController::class, 'autoApprovedPOs'])->name('purchase.auto-approved-po');
     Route::get('purchase/received-po', [\App\Http\Controllers\PurchaseOrderController::class, 'receivedPOs'])->name('purchase.received-po');
+    Route::get('purchase/receive-order/{purchaseOrder}', [\App\Http\Controllers\PurchaseOrderController::class, 'receiveOrder'])->name('purchase.receive-order.view');
+    Route::post('purchase/receive-order/{purchaseOrder}', [\App\Http\Controllers\PurchaseOrderController::class, 'processReceive'])->name('purchase.receive-order.store');
+    Route::post('purchase/finalize-receive/{purchaseOrder}', [\App\Http\Controllers\PurchaseOrderController::class, 'finalizeReceive'])->name('purchase.finalize-receive');
     Route::post('purchase/receive-po/{purchaseOrder}', [\App\Http\Controllers\PurchaseOrderController::class, 'receive'])->name('purchase.receive-po');
     Route::get('purchase/debit-note', [\App\Http\Controllers\DebitNoteController::class, 'index'])->name('purchase.debit-note.index');
     Route::get('purchase/generate-debit-note', [\App\Http\Controllers\DebitNoteController::class, 'create'])->name('purchase.debit-note.create');
     Route::post('purchase/generate-debit-note', [\App\Http\Controllers\DebitNoteController::class, 'store'])->name('purchase.debit-note.store');
-    Route::inertia('purchase/payment-entry', 'Purchase/PaymentEntry')->name('purchase.payment-entry');
+    Route::get('purchase/payment-entry', [\App\Http\Controllers\PaymentController::class, 'supplierPayments'])->name('purchase.payment-entry');
+    Route::post('purchase/payment-entry', [\App\Http\Controllers\PaymentController::class, 'storeSupplierPayment'])->name('purchase.payment-entry.store');
+    Route::delete('purchase/payment-entry/{payment}', [\App\Http\Controllers\PaymentController::class, 'deleteSupplierPayment'])->name('purchase.payment-entry.destroy');
 
     // Sales Management
     Route::get('sales/generate-invoice', [\App\Http\Controllers\SalesController::class, 'generateInvoice'])->name('sales.generate-invoice');
     Route::post('sales/generate-invoice', [\App\Http\Controllers\SalesController::class, 'storeInvoice'])->name('sales.generate-invoice.store');
     Route::get('sales/order-management', [\App\Http\Controllers\SalesController::class, 'orderManagement'])->name('sales.order-management');
     Route::get('sales/approved-invoice', [\App\Http\Controllers\SalesController::class, 'approvedInvoice'])->name('sales.approved-invoice');
+    Route::get('sales/invoices/{invoice}/print', [\App\Http\Controllers\SalesInvoicePrintController::class, 'print'])->name('sales.invoices.print');
+    Route::get('sales/approve-invoice/{invoice}', [\App\Http\Controllers\SalesController::class, 'showApproveInvoice'])->name('sales.approve-invoice.show');
     Route::post('sales/approve-invoice/{invoice}', [\App\Http\Controllers\SalesController::class, 'approveInvoice'])->name('sales.approve-invoice');
-    Route::inertia('sales/send-invoice', 'Sales/SendInvoice')->name('sales.send-invoice');
-    Route::inertia('sales/credit-note', 'Sales/CreditNote')->name('sales.credit-note');
-    Route::inertia('sales/payment-entry', 'Sales/PaymentEntry')->name('sales.payment-entry');
+    Route::post('sales/reject-invoice/{invoice}', [\App\Http\Controllers\SalesController::class, 'rejectInvoice'])->name('sales.reject-invoice');
+    Route::get('sales/send-invoice', [\App\Http\Controllers\SalesController::class, 'sendInvoice'])->name('sales.send-invoice');
+    Route::post('sales/send-invoice/{invoice}', [\App\Http\Controllers\SalesController::class, 'processSendInvoice'])->name('sales.send-invoice.process');
+    Route::get('sales/credit-note', [\App\Http\Controllers\CreditNoteController::class, 'index'])->name('sales.credit-note');
+    Route::get('sales/credit-note/create', [\App\Http\Controllers\CreditNoteController::class, 'create'])->name('sales.credit-note.create');
+    Route::post('sales/credit-note', [\App\Http\Controllers\CreditNoteController::class, 'store'])->name('sales.credit-note.store');
+    Route::get('sales/payment-entry', [\App\Http\Controllers\PaymentController::class, 'customerPayments'])->name('sales.payment-entry');
+    Route::post('sales/payment-entry', [\App\Http\Controllers\PaymentController::class, 'storeCustomerPayment'])->name('sales.payment-entry.store');
+    Route::delete('sales/payment-entry/{payment}', [\App\Http\Controllers\PaymentController::class, 'deleteCustomerPayment'])->name('sales.payment-entry.destroy');
 
     // Operations
     Route::inertia('operations/production', 'Operations/Production')->name('operations.production');
@@ -64,6 +83,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('stock/current-stock', [\App\Http\Controllers\StockController::class, 'currentStock'])->name('stock.current-stock');
     Route::get('stock/wastage-entry', [\App\Http\Controllers\StockController::class, 'wastageEntry'])->name('stock.wastage-entry');
     Route::post('stock/wastage-entry', [\App\Http\Controllers\StockController::class, 'storeWastageEntry'])->name('stock.wastage-entry.store');
+    Route::get('stock/missing-entry', [\App\Http\Controllers\StockController::class, 'missingEntry'])->name('stock.missing-entry');
+    Route::post('stock/missing-entry', [\App\Http\Controllers\StockController::class, 'storeMissingEntry'])->name('stock.missing-entry.store');
     Route::get('stock/stock-transfer', [\App\Http\Controllers\StockController::class, 'stockTransfer'])->name('stock.stock-transfer');
     Route::post('stock/stock-transfer', [\App\Http\Controllers\StockController::class, 'storeStockTransfer'])->name('stock.stock-transfer.store');
     Route::get('stock/transfer-report', [\App\Http\Controllers\StockController::class, 'stockTransferReport'])->name('stock.transfer-report');
@@ -75,9 +96,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('stock/physical-entry', [\App\Http\Controllers\StockController::class, 'storePhysicalStockEntryReport'])->name('stock.physical-entry.store');
     Route::inertia('operations/stock-management', 'Operations/StockManagement')->name('operations.stock-management');
     Route::inertia('operations/payment-management', 'Operations/PaymentManagement')->name('operations.payment-management');
-    Route::inertia('operations/payment-details', 'Operations/PaymentDetails')->name('operations.payment-details');
-    Route::inertia('operations/bulk-payment', 'Operations/BulkPayment')->name('operations.bulk-payment');
-    Route::inertia('operations/payment-transaction-report', 'Operations/PaymentTransactionReport')->name('operations.payment-transaction-report');
+    Route::get('operations/payment-details', [\App\Http\Controllers\PaymentController::class, 'paymentDetails'])->name('operations.payment-details');
+    Route::get('operations/bulk-payment', [\App\Http\Controllers\PaymentController::class, 'bulkPayment'])->name('operations.bulk-payment');
+    Route::post('operations/bulk-payment', [\App\Http\Controllers\PaymentController::class, 'storeBulkPayment'])->name('operations.bulk-payment.store');
+    Route::get('operations/payment-transaction-report', [\App\Http\Controllers\PaymentController::class, 'paymentTransactionReport'])->name('operations.payment-transaction-report');
+
+    Route::resource('operations/additional-expenses', \App\Http\Controllers\AdditionalExpenseController::class)->names('operations.additional-expenses');
 
     Route::inertia('operations/kitchen-register', 'Operations/KitchenRegister')->name('operations.kitchen-register');
 
@@ -105,11 +129,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('stock/valuation', [\App\Http\Controllers\ReportController::class, 'stockValuation'])->name('reports.stock.valuation');
         
         // New Reports Added
-        Route::inertia('new/supplier-payment', 'Reports/SupplierPaymentReport')->name('reports.new.supplier-payment');
-        Route::inertia('new/supplier-payment-entry', 'Reports/SupplierPaymentEntry')->name('reports.new.supplier-payment-entry');
-        Route::inertia('new/price-deviation', 'Reports/PriceDeviationReport')->name('reports.new.price-deviation');
-        Route::inertia('new/creditors-report', 'Reports/CreditorsReport')->name('reports.new.creditors-report');
-        Route::inertia('new/supplier-account', 'Reports/SupplierAccountReport')->name('reports.new.supplier-account');
+        Route::get('new/supplier-payment', [\App\Http\Controllers\ReportController::class, 'newSupplierPaymentReport'])->name('reports.new.supplier-payment');
+        Route::get('new/supplier-payment-entry', [\App\Http\Controllers\ReportController::class, 'newSupplierPaymentEntry'])->name('reports.new.supplier-payment-entry');
+        Route::post('new/supplier-payment-entry', [\App\Http\Controllers\ReportController::class, 'storeNewSupplierPayment'])->name('reports.new.supplier-payment-entry.store');
+        Route::get('new/price-deviation', [\App\Http\Controllers\ReportController::class, 'newPriceDeviation'])->name('reports.new.price-deviation');
+        Route::get('new/creditors-report', [\App\Http\Controllers\ReportController::class, 'newCreditorsReport'])->name('reports.new.creditors-report');
+        Route::get('new/supplier-account', [\App\Http\Controllers\ReportController::class, 'newSupplierAccount'])->name('reports.new.supplier-account');
 
         // Redirect legacy routes
         Route::get('purchase', function() { return redirect()->route('reports.purchase.order-summary'); });
@@ -119,6 +144,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Legacy/Master Routes
     Route::resource('master/supplier-master', \App\Http\Controllers\SupplierController::class);
     Route::resource('master/location-master', \App\Http\Controllers\LocationController::class);
+    Route::resource('master/project-master', \App\Http\Controllers\ProjectController::class);
     Route::post('master/item-master/import', [\App\Http\Controllers\ItemController::class, 'import'])->name('master.item-master.import');
     Route::resource('master/item-master', \App\Http\Controllers\ItemController::class);
 

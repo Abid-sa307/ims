@@ -25,9 +25,9 @@ class DebitNoteController extends Controller
     public function create()
     {
         return Inertia::render('Purchase/GenerateDebitNote', [
-            'locations' => Location::all(),
+            'locations' => Location::where('location_type', '!=', 'Customer')->get(),
             'suppliers' => Supplier::all(),
-            'purchaseOrders' => PurchaseOrder::with(['supplier', 'items.item'])->where('status', 'approved')->get(),
+            'purchaseOrders' => PurchaseOrder::with(['supplier', 'items.item'])->where('status', '!=', 'rejected')->get(),
             'items' => Item::all()
         ]);
     }
@@ -85,6 +85,7 @@ class DebitNoteController extends Controller
 
             $debitNote = DebitNote::create(array_merge($validated, [
                 'note_number' => $noteNumber,
+                'amount' => $validated['grand_total'],
             ]));
 
             foreach ($validated['items'] as $itemData) {

@@ -19,7 +19,6 @@ interface Item {
     item_sub_category_id: number | null;
     item_type_id: number | null;
     item_name_gujarati: string | null;
-    equivalent_selling_item: string | null;
     safety_quantity: number;
     base_unit_id: number | null;
     default_tax_id: number | null;
@@ -88,7 +87,6 @@ export default function ItemMaster({
         item_sub_category_id: '' as any,
         item_type_id: '' as any,
         item_name_gujarati: '',
-        equivalent_selling_item: '',
         safety_quantity: 0,
         base_unit_id: '' as any,
         default_tax_id: '0' as any,
@@ -410,15 +408,6 @@ export default function ItemMaster({
                                         <Input value={data.item_name_gujarati || ''} onChange={e => setData('item_name_gujarati', e.target.value)} placeholder="Please Enter Item Name" />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label className="text-slate-600">Equivalent Selling Item</Label>
-                                        <Select value={data.equivalent_selling_item || ''} onValueChange={v => setData('equivalent_selling_item', v)}>
-                                            <SelectTrigger><SelectValue placeholder="-- Please Select --" /></SelectTrigger>
-                                            <SelectContent>
-                                                {items.map(i => <SelectItem key={i.id} value={String(i.id)}>{i.item_name}</SelectItem>)}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    <div className="space-y-2">
                                         <Label className="text-slate-600">Safety Quantity</Label>
                                         <Input type="number" value={data.safety_quantity} onChange={e => setData('safety_quantity', parseFloat(e.target.value))} />
                                     </div>
@@ -431,8 +420,8 @@ export default function ItemMaster({
                                             </SelectContent>
                                         </Select>
                                     </div>
-                                </div>
-                            </CardContent>
+                                    </div>
+                                </CardContent>
                         </Card>
 
                         {/* Section 2: UOM Conversation */}

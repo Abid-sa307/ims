@@ -23,6 +23,9 @@ interface Props {
     purchaseStats: any[];
     salesStats: any[];
     supplierData: any[];
+    categoryData: any[];
+    creditors: any[];
+    debtors: any[];
     locations: any[];
     filters: {
         location_id?: string;
@@ -35,6 +38,9 @@ export default function Dashboard({
     purchaseStats = [],
     salesStats = [],
     supplierData = [],
+    categoryData = [],
+    creditors = [],
+    debtors = [],
     locations = [],
     filters = {}
 }: Props) {
@@ -226,59 +232,170 @@ export default function Dashboard({
                 </div>
 
                 {/* Dynamic Charts Section */}
-                <div className="grid gap-6">
+                <div className="grid gap-6 lg:grid-cols-2">
+                    {/* Supplier Wise Purchase */}
                     <Card className="bg-white border-none shadow-sm overflow-hidden">
                         <CardHeader className="bg-gray-50/50 border-b border-gray-100 py-4 px-6 flex flex-row items-center justify-between">
                             <CardTitle className="text-[11px] font-black uppercase tracking-wider text-gray-500 flex items-center gap-2">
                                 <TrendingUp className="size-4 text-indigo-500" />
-                                {view === 'purchase' ? 'Supplier Wise Distribution' : 'Sales Analytics'}
+                                {view === 'purchase' ? 'Supplier Distribution' : 'Sales Analytics'}
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="p-6">
-                            <div className="grid lg:grid-cols-3 gap-8 items-center">
-                                {/* Chart */}
-                                <div className="lg:col-span-1 h-[300px]">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <PieChart>
-                                            <Pie
-                                                data={view === 'purchase' ? supplierData : []}
-                                                innerRadius={80}
-                                                outerRadius={110}
-                                                paddingAngle={8}
-                                                dataKey="value"
-                                                stroke="none"
-                                            >
-                                                {(view === 'purchase' ? supplierData : []).map((entry, index) => (
-                                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                                ))}
-                                            </Pie>
-                                            <Tooltip
-                                                contentStyle={{ backgroundColor: 'white', borderRadius: '12px', border: 'none', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}
-                                            />
-                                        </PieChart>
-                                    </ResponsiveContainer>
-                                </div>
-
-                                {/* Legend / List */}
-                                <div className="lg:col-span-2">
-                                    <div className="grid sm:grid-cols-2 gap-4">
-                                        {(view === 'purchase' ? supplierData : []).map((item, i) => (
-                                            <div key={i} className="flex items-center justify-between p-4 rounded-2xl bg-gray-50/50 border border-gray-100 hover:border-indigo-100 transition-all">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="size-3 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                                                    <span className="text-sm font-bold text-gray-700">{item.name}</span>
-                                                </div>
-                                                <span className="text-sm font-black text-[#162a5b]">₹{numberWithCommas(item.value)}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    { (view === 'purchase' ? supplierData : []).length === 0 && (
-                                        <div className="flex flex-col items-center justify-center p-12 text-gray-400">
-                                            <Package className="size-12 mb-2 opacity-20" />
-                                            <p className="text-sm italic">No distribution data available for selected filters.</p>
+                            <div className="h-[250px] mb-6">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                            data={(view === 'purchase' ? supplierData : []).map(d => ({ ...d, value: Number(d.value) }))}
+                                            cx="50%"
+                                            cy="50%"
+                                            innerRadius={60}
+                                            outerRadius={90}
+                                            paddingAngle={8}
+                                            dataKey="value"
+                                            stroke="none"
+                                        >
+                                            {(view === 'purchase' ? supplierData : []).map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip
+                                            contentStyle={{ backgroundColor: 'white', borderRadius: '12px', border: 'none', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}
+                                        />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
+                            <div className="space-y-2 max-h-[150px] overflow-y-auto pr-2 custom-scrollbar">
+                                {(view === 'purchase' ? supplierData : []).map((item, i) => (
+                                    <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-gray-50/50 border border-gray-100">
+                                        <div className="flex items-center gap-2">
+                                            <div className="size-2 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                                            <span className="text-[11px] font-bold text-gray-700 truncate max-w-[150px]">{item.name}</span>
                                         </div>
-                                    )}
-                                </div>
+                                        <span className="text-[11px] font-black text-[#162a5b]">₹{numberWithCommas(item.value)}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Category Wise Purchase */}
+                    <Card className="bg-white border-none shadow-sm overflow-hidden">
+                        <CardHeader className="bg-gray-50/50 border-b border-gray-100 py-4 px-6 flex flex-row items-center justify-between">
+                            <CardTitle className="text-[11px] font-black uppercase tracking-wider text-gray-500 flex items-center gap-2">
+                                <Package className="size-4 text-emerald-500" />
+                                Category Distribution
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-6">
+                            <div className="h-[250px] mb-6">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                            data={categoryData.map(d => ({ ...d, value: Number(d.value) }))}
+                                            cx="50%"
+                                            cy="50%"
+                                            innerRadius={60}
+                                            outerRadius={90}
+                                            paddingAngle={8}
+                                            dataKey="value"
+                                            stroke="none"
+                                        >
+                                            {categoryData.map((entry, index) => (
+                                                <Cell key={`cell-cat-${index}`} fill={COLORS[(index + 2) % COLORS.length]} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip
+                                            contentStyle={{ backgroundColor: 'white', borderRadius: '12px', border: 'none', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}
+                                        />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
+                            <div className="space-y-2 max-h-[150px] overflow-y-auto pr-2 custom-scrollbar">
+                                {categoryData.map((item, i) => (
+                                    <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-gray-50/50 border border-gray-100">
+                                        <div className="flex items-center gap-2">
+                                            <div className="size-2 rounded-full" style={{ backgroundColor: COLORS[(i + 2) % COLORS.length] }} />
+                                            <span className="text-[11px] font-bold text-gray-700 truncate max-w-[150px]">{item.name}</span>
+                                        </div>
+                                        <span className="text-[11px] font-black text-[#162a5b]">₹{numberWithCommas(item.value)}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* Creditors & Debtors Section */}
+                <div className="grid gap-6 lg:grid-cols-2 mt-2">
+                    {/* Creditors Table */}
+                    <Card className="bg-white border-none shadow-sm overflow-hidden">
+                        <CardHeader className="bg-[#162a5b] text-white py-4 px-6">
+                            <CardTitle className="text-[11px] font-black uppercase tracking-widest flex items-center gap-2">
+                                <Users className="size-4" />
+                                Outstanding Creditors (Suppliers)
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-0">
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-xs">
+                                    <thead className="bg-gray-50 text-[10px] uppercase font-bold text-gray-400 border-b">
+                                        <tr>
+                                            <th className="px-6 py-4 text-left">Supplier</th>
+                                            <th className="px-6 py-4 text-left">Location</th>
+                                            <th className="px-6 py-4 text-right">Balance</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100">
+                                        {creditors.length > 0 ? creditors.map((c, i) => (
+                                            <tr key={i} className="hover:bg-gray-50/50 transition-colors">
+                                                <td className="px-6 py-4 font-bold text-gray-700">{c.supplier_name}</td>
+                                                <td className="px-6 py-4 text-gray-500 font-medium">{c.location_legal_name}</td>
+                                                <td className="px-6 py-4 text-right font-black text-red-600">₹{numberWithCommas(c.balance)}</td>
+                                            </tr>
+                                        )) : (
+                                            <tr>
+                                                <td colSpan={3} className="px-6 py-10 text-center text-gray-400 italic">No outstanding creditors found.</td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Debtors Table */}
+                    <Card className="bg-white border-none shadow-sm overflow-hidden">
+                        <CardHeader className="bg-emerald-600 text-white py-4 px-6">
+                            <CardTitle className="text-[11px] font-black uppercase tracking-widest flex items-center gap-2">
+                                <ShieldCheck className="size-4" />
+                                Outstanding Debtors (Customers)
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-0">
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-xs">
+                                    <thead className="bg-gray-50 text-[10px] uppercase font-bold text-gray-400 border-b">
+                                        <tr>
+                                            <th className="px-6 py-4 text-left">Customer</th>
+                                            <th className="px-6 py-4 text-left">Location</th>
+                                            <th className="px-6 py-4 text-right">Balance</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100">
+                                        {debtors.length > 0 ? debtors.map((d, i) => (
+                                            <tr key={i} className="hover:bg-gray-50/50 transition-colors">
+                                                <td className="px-6 py-4 font-bold text-gray-700">{d.customer_name}</td>
+                                                <td className="px-6 py-4 text-gray-500 font-medium">{d.location_legal_name}</td>
+                                                <td className="px-6 py-4 text-right font-black text-emerald-600">₹{numberWithCommas(d.balance)}</td>
+                                            </tr>
+                                        )) : (
+                                            <tr>
+                                                <td colSpan={3} className="px-6 py-10 text-center text-gray-400 italic">No outstanding debtors found.</td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
                             </div>
                         </CardContent>
                     </Card>

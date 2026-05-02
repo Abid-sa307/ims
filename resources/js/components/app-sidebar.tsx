@@ -85,6 +85,10 @@ const mainNavItems: NavItem[] = [
                 title: 'Location Master',
                 href: '/master/location-master',
             },
+            {
+                title: 'Project Master',
+                href: '/master/project-master',
+            },
         ],
     },
     {
@@ -146,16 +150,16 @@ const mainNavItems: NavItem[] = [
                 href: '/purchase/summary',
             },
             {
-                title: 'Approved PO',
+                title: 'Purchase Order Approval',
                 href: '/purchase/approved-po',
-            },
-            {
-                title: 'Auto Approved PO',
-                href: '/purchase/auto-approved-po',
             },
             {
                 title: 'Send PO to Supplier',
                 href: '/purchase/send-po',
+            },
+            {
+                title: 'Auto Approved PO',
+                href: '/purchase/auto-approved-po',
             },
             {
                 title: 'Received PO from Supplier',
@@ -177,15 +181,15 @@ const mainNavItems: NavItem[] = [
         icon: Tags,
         items: [
             {
-                title: 'Create A Sales Invoice',
+                title: 'Generate SO',
                 href: '/sales/generate-invoice',
             },
             {
-                title: 'Customer Order Management',
+                title: 'Sales Summary',
                 href: '/sales/order-management',
             },
             {
-                title: 'Approved the Sale Invoice',
+                title: 'Approved SO',
                 href: '/sales/approved-invoice',
             },
             {
@@ -259,6 +263,10 @@ const mainNavItems: NavItem[] = [
                 title: 'Physical Stock Entry Report',
                 href: '/stock/physical-entry',
             },
+            {
+                title: 'Missing Entry',
+                href: '/stock/missing-entry',
+            },
         ],
     },
     {
@@ -266,10 +274,7 @@ const mainNavItems: NavItem[] = [
         href: '#',
         icon: DollarSign,
         items: [
-            {
-                title: 'Payment Management',
-                href: '/operations/payment-management',
-            },
+            
             {
                 title: 'Payment Details',
                 href: '/operations/payment-details',
@@ -281,6 +286,10 @@ const mainNavItems: NavItem[] = [
             {
                 title: 'Payment Transaction Report',
                 href: '/operations/payment-transaction-report',
+            },
+            {
+                title: 'Additional Expenses',
+                href: '/operations/additional-expenses',
             },
         ],
     },

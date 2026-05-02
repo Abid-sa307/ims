@@ -16,7 +16,7 @@ class ItemWarehouseMappingController extends Controller
     {
         return Inertia::render('Inventory/ItemWarehouseMapping', [
             'mappings' => ItemWarehouseMapping::with(['location', 'warehouse', 'category', 'item'])->get(),
-            'locations' => Location::all(),
+            'locations' => Location::where('location_type', '!=', 'Customer')->get(),
             'warehouses' => Warehouse::all(),
             'categories' => ItemCategory::all(),
             'items' => Item::all()

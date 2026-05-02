@@ -40,11 +40,10 @@ class ItemController extends Controller
             'item_sub_category_id' => 'nullable|exists:item_sub_categories,id',
             'item_type_id' => 'nullable|exists:item_types,id',
             'item_name_gujarati' => 'nullable|string|max:255',
-            'equivalent_selling_item' => 'nullable|string|max:255',
-            'safety_quantity' => 'nullable|numeric|min:0',
+            'safety_quantity' => 'required|numeric|min:0',
             'base_unit_id' => 'nullable|exists:uoms,id',
             'default_tax_id' => 'nullable|integer',
-            'selling_item_as' => 'nullable|in:Goods,Service',
+            'selling_item_as' => 'required|in:Goods,Service',
             'hsn_code' => 'nullable|string|max:50',
             'sac_code' => 'nullable|string|max:50',
             'htsn_code' => 'nullable|string|max:50',
@@ -53,15 +52,15 @@ class ItemController extends Controller
             'cess_percentage' => 'nullable|numeric|min:0',
             'cess_description' => 'nullable|string',
             'price_type' => 'nullable|string|max:50',
-            'standard_sale_price' => 'nullable|numeric|min:0',
-            'standard_purchase_price' => 'nullable|numeric|min:0',
-            'net_cost' => 'nullable|numeric|min:0',
-            'shelf_life_days' => 'nullable|integer|min:0',
-            'single_batch_quantity' => 'nullable|numeric|min:0',
+            'standard_sale_price' => 'required|numeric|min:0',
+            'standard_purchase_price' => 'required|numeric|min:0',
+            'net_cost' => 'required|numeric|min:0',
+            'shelf_life_days' => 'required|integer|min:0',
+            'single_batch_quantity' => 'required|numeric|min:0',
             'item_barcode' => 'nullable|string|max:100',
             'item_sku' => 'nullable|string|max:100',
-            'standard_weight_single_unit' => 'nullable|numeric|min:0',
-            'weight_adjustment_gross_weight' => 'nullable|numeric|min:0',
+            'standard_weight_single_unit' => 'required|numeric|min:0',
+            'weight_adjustment_gross_weight' => 'required|numeric|min:0',
             'pallet_size_export' => 'nullable|string|max:100',
             'is_manufacture' => 'nullable|boolean',
             'is_fat_item' => 'nullable|boolean',
@@ -85,6 +84,12 @@ class ItemController extends Controller
                 $uom = Uom::find($validated['base_unit_id']);
                 if ($uom) {
                     $validated['uom'] = $uom->name;
+                }
+            }
+            if (!empty($validated['default_tax_id'])) {
+                $taxProfile = TaxProfile::find($validated['default_tax_id']);
+                if ($taxProfile) {
+                    $validated['tax_percent'] = $taxProfile->total_percentage;
                 }
             }
             $item = Item::create($validated);
@@ -113,11 +118,10 @@ class ItemController extends Controller
             'item_sub_category_id' => 'nullable|exists:item_sub_categories,id',
             'item_type_id' => 'nullable|exists:item_types,id',
             'item_name_gujarati' => 'nullable|string|max:255',
-            'equivalent_selling_item' => 'nullable|string|max:255',
-            'safety_quantity' => 'nullable|numeric|min:0',
+            'safety_quantity' => 'required|numeric|min:0',
             'base_unit_id' => 'nullable|exists:uoms,id',
             'default_tax_id' => 'nullable|integer',
-            'selling_item_as' => 'nullable|in:Goods,Service',
+            'selling_item_as' => 'required|in:Goods,Service',
             'hsn_code' => 'nullable|string|max:50',
             'sac_code' => 'nullable|string|max:50',
             'htsn_code' => 'nullable|string|max:50',
@@ -126,15 +130,15 @@ class ItemController extends Controller
             'cess_percentage' => 'nullable|numeric|min:0',
             'cess_description' => 'nullable|string',
             'price_type' => 'nullable|string|max:50',
-            'standard_sale_price' => 'nullable|numeric|min:0',
-            'standard_purchase_price' => 'nullable|numeric|min:0',
-            'net_cost' => 'nullable|numeric|min:0',
-            'shelf_life_days' => 'nullable|integer|min:0',
-            'single_batch_quantity' => 'nullable|numeric|min:0',
+            'standard_sale_price' => 'required|numeric|min:0',
+            'standard_purchase_price' => 'required|numeric|min:0',
+            'net_cost' => 'required|numeric|min:0',
+            'shelf_life_days' => 'required|integer|min:0',
+            'single_batch_quantity' => 'required|numeric|min:0',
             'item_barcode' => 'nullable|string|max:100',
             'item_sku' => 'nullable|string|max:100',
-            'standard_weight_single_unit' => 'nullable|numeric|min:0',
-            'weight_adjustment_gross_weight' => 'nullable|numeric|min:0',
+            'standard_weight_single_unit' => 'required|numeric|min:0',
+            'weight_adjustment_gross_weight' => 'required|numeric|min:0',
             'pallet_size_export' => 'nullable|string|max:100',
             'is_manufacture' => 'nullable|boolean',
             'is_fat_item' => 'nullable|boolean',
@@ -158,6 +162,12 @@ class ItemController extends Controller
                 $uom = Uom::find($validated['base_unit_id']);
                 if ($uom) {
                     $validated['uom'] = $uom->name;
+                }
+            }
+            if (!empty($validated['default_tax_id'])) {
+                $taxProfile = TaxProfile::find($validated['default_tax_id']);
+                if ($taxProfile) {
+                    $validated['tax_percent'] = $taxProfile->total_percentage;
                 }
             }
             $item_master->update($validated);

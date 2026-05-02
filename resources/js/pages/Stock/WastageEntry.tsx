@@ -34,12 +34,14 @@ export default function WastageEntry({
     categories = [],
     items = [],
     uoms = [],
+    recentEntries = [],
 }: {
     locations: Location[],
     warehouses: Warehouse[],
     categories: Category[],
     items: Item[],
     uoms: UOM[],
+    recentEntries: any[],
 }) {
     const { data, setData, post, processing, reset } = useForm({
         date: new Date().toISOString().split('T')[0],
@@ -250,6 +252,56 @@ export default function WastageEntry({
                         </Button>
                     </div>
                 </Card>
+
+                {/* Recent Entries Section */}
+                <div className="mt-8">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                            <List className="size-5 text-[#162a5b]" />
+                            <h2 className="text-lg font-bold text-[#162a5b]">Recent Wastage Entries</h2>
+                        </div>
+                        <span className="text-xs text-gray-500 uppercase font-semibold">Showing last 10 entries</span>
+                    </div>
+
+                    <Card className="border-none shadow-sm bg-white overflow-hidden">
+                        <Table>
+                            <TableHeader className="bg-[#162a5b] hover:bg-[#162a5b]">
+                                <TableRow>
+                                    <TableHead className="text-white font-bold h-10 py-0">Date</TableHead>
+                                    <TableHead className="text-white font-bold h-10 py-0">Location</TableHead>
+                                    <TableHead className="text-white font-bold h-10 py-0">Warehouse</TableHead>
+                                    <TableHead className="text-white font-bold h-10 py-0">Item Name</TableHead>
+                                    <TableHead className="text-white font-bold h-10 py-0">Qty</TableHead>
+                                    <TableHead className="text-white font-bold h-10 py-0">UOM</TableHead>
+                                    <TableHead className="text-white font-bold h-10 py-0">Reason</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {recentEntries && recentEntries.length > 0 ? (
+                                    recentEntries.map((entry) => (
+                                        <TableRow key={entry.id} className="hover:bg-gray-50/50 transition-colors border-b last:border-0 border-gray-100 h-10 py-0">
+                                            <TableCell className="py-2 text-[11px] font-medium">{entry.date}</TableCell>
+                                            <TableCell className="py-2 text-[11px]">{entry.location?.location_legal_name || 'N/A'}</TableCell>
+                                            <TableCell className="py-2 text-[11px]">{entry.warehouse?.name || 'N/A'}</TableCell>
+                                            <TableCell className="py-2 text-[11px] font-semibold text-[#162a5b]">{entry.item?.item_name || 'N/A'}</TableCell>
+                                            <TableCell className="py-2 text-[11px] font-bold text-red-600">-{entry.wastage_quantity}</TableCell>
+                                            <TableCell className="py-2 text-[11px]">{entry.item?.base_unit?.uom_name || '-'}</TableCell>
+                                            <TableCell className="py-2 text-[11px] text-gray-600 max-w-xs truncate" title={entry.reason}>
+                                                {entry.reason || '-'}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={7} className="h-20 text-center text-gray-400 text-sm">
+                                            No recent wastage entries found.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </Card>
+                </div>
             </div>
         </AppLayout>
     );
